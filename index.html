@@ -96,9 +96,21 @@ button{border:0;background:none;cursor:pointer;color:inherit;}
 }
 .item-thumb .emoji{font-size:42px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.12));}
 .item-thumb .loc{
-  position:absolute; left:8px; bottom:8px; font-size:10px;
-  padding:2px 7px; border-radius:999px; background:rgba(255,255,255,.92);
-  color:#555; font-weight:600;
+  position:absolute; left:6px; top:6px; font-size:10px;
+  padding:2px 7px; border-radius:999px; background:rgba(0,0,0,.55);
+  color:#fff; font-weight:700;
+}
+.item-thumb .thumb-stats{
+  position:absolute; right:6px; top:6px; display:flex; flex-direction:column; gap:4px; align-items:flex-end;
+}
+.item-thumb .thumb-stats span{
+  font-size:10px; padding:2px 7px; border-radius:999px;
+  background:rgba(0,0,0,.55); color:#fff; font-weight:700;
+}
+.item-thumb .thumb-borrow{
+  position:absolute; right:6px; bottom:6px; font-size:10px;
+  padding:2px 7px; border-radius:999px; background:rgba(0,0,0,.55);
+  color:#fff; font-weight:700;
 }
 .item-body{
   flex:1; padding:12px 12px 12px 14px; display:flex; flex-direction:column;
@@ -393,7 +405,12 @@ button{border:0;background:none;cursor:pointer;color:inherit;}
 .login-page{
   min-height:100vh; display:flex; flex-direction:column;
   background:linear-gradient(165deg,#0f2a1f 0%,#0c3b28 40%,#07c160 130%);
-  color:#fff; padding:28px 24px calc(28px + var(--safe-b));
+  color:#fff; padding:28px 24px calc(28px + var(--safe-b)); position:relative;
+}
+.login-page .admin-entry{
+  position:absolute; right:20px; top:22px;
+  font-size:12px; opacity:.72; padding:6px 8px;
+  color:#fff; letter-spacing:.5px;
 }
 .login-page .logo{
   width:88px; height:88px; border-radius:24px; background:rgba(255,255,255,.14);
@@ -455,12 +472,12 @@ button{border:0;background:none;cursor:pointer;color:inherit;}
 <div id="app">
   <!-- LOGIN -->
   <section id="page-login" class="login-page">
+    <button class="admin-entry" onclick="login('admin')" type="button">管理员登录</button>
     <div class="logo">🧰</div>
     <h1>共享工具间</h1>
     <p class="desc">邻里互助 · 物尽其用<br>借工具、还工具、管物资，都在这里</p>
     <div class="grow"></div>
-    <button class="login-btn" onclick="login('resident')">微信一键登录（居民）</button>
-    <button class="login-btn alt" onclick="login('admin')">管理员登录</button>
+    <button class="login-btn" onclick="login('resident')">微信一键登录</button>
     <p class="login-tip">原型演示：数据保存在本机，刷新后可点「重置演示数据」</p>
   </section>
 
@@ -469,7 +486,7 @@ button{border:0;background:none;cursor:pointer;color:inherit;}
     <div class="topbar">
       <div>
         <h1>共享工具间</h1>
-        <div class="sub">阳光小区 · 3号楼东侧工具间</div>
+        <div class="sub" id="home-sub"></div>
       </div>
       <div class="grow"></div>
       <button class="icon-btn" onclick="openScan()" title="扫码">📷</button>
@@ -726,7 +743,10 @@ function defaultData(){
       maxDays:0, // 0 = 不限制
       allowReserve:true,
       creditEnabled:true,
-      reserveConfirmHours:12
+      reserveConfirmHours:12,
+      communityName:'桃境满元里',
+      toolRoomLocation:'10幢一楼',
+      toolRoomPassword:'12345678'
     },
     categories:[
       {id:'power', name:'电动工具'},
@@ -927,6 +947,13 @@ function defaultData(){
         status:'done', time:'上周', reply:'已优化：规则对居民隐藏细节，管理员可见。'
       }
     ],
+    reviews:[
+      {id:'rv1', itemId:'i1', userId:'u3', userName:'王阿姨', rating:5, content:'梯子很稳，换灯泡很好用。', time:'上周'},
+      {id:'rv2', itemId:'i1', userId:'u2', userName:'张叔', rating:4, content:'略重，但质量不错。', time:'2周前'},
+      {id:'rv3', itemId:'i3', userId:'u1', userName:'林小雨', rating:5, content:'钻头齐全，装架子很给力。', time:'19天前'},
+      {id:'rv4', itemId:'i2', userId:'u4', userName:'李哥', rating:4, content:'搬家神器，刹车好用。', time:'上月'},
+      {id:'rv5', itemId:'i8', userId:'u3', userName:'王阿姨', rating:5, content:'压力表准，打气方便。', time:'上月'}
+    ],
     creditLog:[
       {id:'c1', title:'按时归还冲击电钻', delta:2, time:'19天前'},
       {id:'c2', title:'完成借用+归还打气筒', delta:2, time:'上月'},
@@ -960,16 +987,45 @@ let ui = {
   feedbackTab:'open',
   feedbackType:'bug',
   feedbackTitle:'',
-  feedbackContent:''
+  feedbackContent:'',
+  reviewItemId:null,
+  reviewRating:5,
+  reviewContent:'',
+  showRoomPwd:false
 };
+function showRoomPwdDialog(e){
+  if(e && e.stopPropagation) e.stopPropagation();
+  const loc = state.settings.toolRoomLocation || '10幢一楼';
+  const pwd = state.settings.toolRoomPassword || '12345678';
+  openOverlay(`
+    <div class="dialog">
+      <h3>工具间门禁</h3>
+      <p>${state.settings.communityName||'桃境满元里'} · ${loc}</p>
+      <div style="text-align:center;padding:18px 12px;background:var(--info-soft);border-radius:14px;margin-bottom:14px">
+        <div style="font-size:12px;color:#0b6a94;margin-bottom:6px">门禁密码</div>
+        <div style="font-size:32px;font-weight:800;letter-spacing:4px;color:#0b6a94">${pwd}</div>
+      </div>
+      <button class="btn-primary" onclick="closeOverlay()">知道了</button>
+    </div>`, true);
+}
+function toggleRoomPwd(e){
+  showRoomPwdDialog(e);
+}
 
 function loadState(){
   try{
     const raw = localStorage.getItem('share_tools_state_v2');
     if(raw){
       const parsed = JSON.parse(raw);
-      if(!parsed.people || !parsed.user || parsed.user.room === undefined || !parsed.feedbacks || !parsed.settings || parsed.settings.reserveConfirmHours === undefined || !parsed.categories){
+      if(!parsed.people || !parsed.user || parsed.user.room === undefined || !parsed.feedbacks || !parsed.settings || parsed.settings.reserveConfirmHours === undefined || !parsed.categories || !parsed.reviews){
         return defaultData();
+      }
+      if(parsed.settings.communityName === undefined){
+        Object.assign(parsed.settings, {
+          communityName:'桃境满元里',
+          toolRoomLocation:'10幢一楼',
+          toolRoomPassword:'12345678'
+        });
       }
       return parsed;
     }
@@ -1122,8 +1178,8 @@ function markReserveReady(res, notify=true){
   res.expiresAt = now + hours * 3600 * 1000;
   if(notify && res.userId === state.user.id){
     state.messages.unshift({
-      id:'m'+Date.now(), type:'reserve', title:'预约到货 · 请尽快确认',
-      body:`你预约的「${res.itemName}」已可借用，请在 ${hours} 小时内确认，逾期将自动取消。`,
+      id:'m'+Date.now(), type:'reserve', title:'预约到货通知',
+      body:`「${res.itemName}」已归还入库。这只是通知、不预占，请尽快到工具间先到先得；若仍要按预约办理，请在 ${hours} 小时内确认，逾期自动取消。`,
       time:'刚刚', read:false
     });
   }
@@ -1176,11 +1232,7 @@ function canUserBorrow(item, userId){
   if(!item || item.status !== 'available'){
     return {ok:false, reason:'not_available'};
   }
-  const q = waitingQueue(item.id);
-  if(!q.length) return {ok:true, queue:0};
-  const head = q[0];
-  if(head.userId === userId) return {ok:true, queue:q.length, fromQueue:true};
-  return {ok:false, reason:'queue', queue:q.length, headName:head.userName};
+  return {ok:true, queue:(waitingQueue(item.id)||[]).length};
 }
 function holderLine(rec){
   if(!rec) return '';
@@ -1218,6 +1270,15 @@ function openOverlay(html, center=false){
    Render: Home
    ========================= */
 function renderHome(){
+  const sub = document.getElementById('home-sub');
+  if(sub){
+    const loc = state.settings.toolRoomLocation || '10幢一楼';
+    const name = state.settings.communityName || '桃境满元里';
+    sub.innerHTML = `${name} · ${loc}
+      <button type="button" onclick="showRoomPwdDialog(event)" style="margin-left:6px;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(7,193,96,.12);color:var(--primary);font-weight:700">
+        查看密码
+      </button>`;
+  }
   const chips = document.getElementById('cat-chips');
   chips.innerHTML = categoryList().map(c=>
     `<button class="chip ${ui.cat===c.id?'active':''}" onclick="setCat('${c.id}')">${c.name}</button>`
@@ -1241,36 +1302,63 @@ function renderHome(){
   }
   list.innerHTML = items.map(renderItemCard).join('');
 }
+function myReserve(itemId){
+  return waitingQueue(itemId).find(r=>r.userId===state.user.id) || null;
+}
+function reserveCount(itemId){
+  return waitingQueue(itemId).length;
+}
+function itemReviews(itemId){
+  return (state.reviews||[]).filter(r=>r.itemId===itemId);
+}
+function canReviewItem(itemId){
+  return state.records.some(r=>r.userId===state.user.id && r.itemId===itemId && r.status==='returned');
+}
+function myReviewFor(itemId){
+  return (state.reviews||[]).find(r=>r.itemId===itemId && r.userId===state.user.id);
+}
+function recalcItemRating(itemId){
+  const list = itemReviews(itemId);
+  const item = itemById(itemId);
+  if(!item) return;
+  if(!list.length) return;
+  const avg = list.reduce((s,r)=>s+(Number(r.rating)||5),0) / list.length;
+  item.rating = Math.round(avg * 10) / 10;
+}
 function itemAction(i){
+  const mine = myReserve(i.id);
+  if(mine) return {label:'已预约', cls:'gray', fn:'', disabled:true};
   const allow = canUserBorrow(i, state.user.id);
-  if(i.status==='available'){
-    if(allow.ok) return {label: allow.fromQueue ? '优先借用' : '借用', cls:'', fn:`openBorrow('${i.id}')`};
-    return {label:'排队', cls:'ghost', fn:`openReserve('${i.id}')`};
-  }
+  if(i.status==='available' && allow.ok) return {label:'借用', cls:'', fn:`openBorrow('${i.id}')`};
   if(i.status==='borrowed') return {label:'预约', cls:'ghost', fn:`openReserve('${i.id}')`};
   return {label:'查看', cls:'ghost', fn:`openDetail('${i.id}')`};
 }
 function renderItemCard(i){
   const act = itemAction(i);
-  const holder = currentHolder(i.id);
-  const holderText = (i.status === 'borrowed' || i.status === 'overdue') && holder
-    ? holderLine(holder)
-    : (holder && i.status !== 'available' ? holderLine(holder) : '');
+  const n = reserveCount(i.id);
   return `
     <article class="item-card" onclick="openDetail('${i.id}')">
       <div class="item-thumb" style="background:${gradStyle(i.grad)}">
         ${itemThumbInner(i)}
         <div class="loc">${i.loc.split(' ').slice(-1)[0]}</div>
+        <div class="thumb-stats">
+          <span>⭐${i.rating||'5.0'}</span>
+        </div>
+        <div class="thumb-borrow">${i.borrowCount||0}次</div>
       </div>
       <div class="item-body">
         <div>
           <h3>${i.name}</h3>
-          <div class="item-meta">${holderText || i.desc}</div>
-          ${holderText ? `<div class="item-meta" style="margin-top:2px">${i.desc}</div>` : ''}
+          <div class="item-meta">${i.desc}</div>
         </div>
         <div class="item-foot">
-          ${statusTag(i.status)}
-          <button class="mini-btn ${act.cls}" onclick="event.stopPropagation();${act.fn}">${act.label}</button>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            ${statusTag(i.status)}
+            ${n>0 ? `<span class="tag purple">${n}人预约</span>` : ''}
+          </div>
+          ${act.disabled
+            ? `<button class="mini-btn ${act.cls}" onclick="event.stopPropagation()" disabled style="opacity:.7">${act.label}</button>`
+            : `<button class="mini-btn ${act.cls}" onclick="event.stopPropagation();${act.fn}">${act.label}</button>`}
         </div>
       </div>
     </article>`;
@@ -1339,8 +1427,9 @@ function renderDetail(){
       <h2>${i.name}</h2>
       <div class="tags">
         ${statusTag(i.status)}
-        <span class="tag gold">⭐ ${i.rating}</span>
-        <span class="tag gray">已借出 ${i.borrowCount} 次</span>
+        <span class="tag gold">⭐ ${i.rating||'5.0'}</span>
+        <span class="tag gray">已借用 ${i.borrowCount||0} 次</span>
+        ${reserveCount(i.id)>0 ? `<span class="tag purple">${reserveCount(i.id)} 人预约</span>` : ''}
       </div>
     </div>
     ${holderCard}
@@ -1348,11 +1437,19 @@ function renderDetail(){
       <div class="row"><div class="k">简介</div><div class="v">${i.desc}</div></div>
       <div class="row"><div class="k">存放位置</div><div class="v">${i.loc}</div></div>
       <div class="row"><div class="k">物品状态</div><div class="v">${i.condition}</div></div>
+      <div class="row"><div class="k">评分</div><div class="v">⭐ ${i.rating||'5.0'} · ${itemReviews(i.id).length} 条评价</div></div>
       ${state.user.isAdmin ? `<div class="row"><div class="k">建议时长</div><div class="v">${state.settings.maxDays? state.settings.maxDays+' 天内':'默认 '+state.settings.defaultDays+' 天，可调整规则'}</div></div>` : ''}
       ${holder ? `<div class="row"><div class="k">借用人</div><div class="v"><b>${holder.userName}</b> · ${holder.userAddr || personAddr(holder.userId, holder) || '未填写住址'} · 预计 ${holder.dueAt} 归还</div></div>` : ''}
     </div>
     <div class="note-card">
       借用须知：请爱护物资、按时归还；损坏请如实登记。逾期会影响信用分。社区邻里之间，请互相体谅。
+    </div>
+    <div class="section-title">
+      <h2>评价（${itemReviews(i.id).length}）</h2>
+      ${canReviewItem(i.id) ? `<span class="link" onclick="openReviewForm('${i.id}')">${myReviewFor(i.id)?'修改评价':'写评价'}</span>` : ''}
+    </div>
+    <div class="list">
+      ${renderReviewList(i.id)}
     </div>
     <div class="section-title"><h2>预约排队</h2></div>
     <div class="list">
@@ -1382,48 +1479,132 @@ function renderDetail(){
   const allow = canUserBorrow(i, state.user.id);
   const queueList = waitingQueue(i.id);
   const myInQueue = queueList.find(r=>r.userId===state.user.id);
+  if(myInQueue){
+    const ready = myInQueue.status === 'ready';
+    actions.innerHTML = `
+      <div class="row2">
+        <button class="btn-primary outline" onclick="cancelReserve('${myInQueue.id}')">取消预约</button>
+        ${ready
+          ? `<button class="btn-primary" onclick="confirmReadyReserve('${myInQueue.id}')">确认借用</button>`
+          : (i.status==='available'
+              ? `<button class="btn-primary" onclick="openBorrow('${i.id}')">立即借用</button>`
+              : `<button class="btn-primary gray" disabled>已预约 · 等通知</button>`)}
+      </div>`;
+    return;
+  }
   if(i.status === 'available'){
-    if(allow.ok){
-      actions.innerHTML = `
-        <div class="row2">
-          <button class="btn-primary outline" onclick="openReserve('${i.id}')">预约</button>
-          <button class="btn-primary" onclick="openBorrow('${i.id}')">${allow.fromQueue?'优先借用':'立即借用'}</button>
-        </div>`;
-    }else{
-      actions.innerHTML = `
-        <div class="row2">
-          <button class="btn-primary gray" disabled>队首优先中</button>
-          <button class="btn-primary" onclick="openReserve('${i.id}')">${myInQueue?'已在队列':'加入排队'}</button>
-        </div>`;
-    }
+    actions.innerHTML = `
+      <div class="row2">
+        <button class="btn-primary outline" onclick="openReserve('${i.id}')">预约排队</button>
+        <button class="btn-primary" onclick="openBorrow('${i.id}')">立即借用</button>
+      </div>`;
   }else if(i.status === 'borrowed'){
     const isMine = holder && holder.userId === state.user.id;
     actions.innerHTML = `
       <div class="row2">
         <button class="btn-primary outline" onclick="openScan()">${isMine?'扫码归还':'扫码'}</button>
-        <button class="btn-primary" onclick="openReserve('${i.id}')">${myInQueue?'已在预约队列':isMine?'查看预约':'加入预约'}</button>
+        <button class="btn-primary" onclick="openReserve('${i.id}')">${isMine?'查看预约':'加入预约'}</button>
       </div>`;
   }else{
     actions.innerHTML = `<button class="btn-primary gray" disabled>暂不可借</button>`;
   }
 }
+function renderReviewList(itemId){
+  const list = itemReviews(itemId);
+  if(!list.length){
+    return `<div class="empty" style="margin:8px 0"><div class="emoji">⭐</div><p>暂无评价</p>${canReviewItem(itemId)?`<button class="mini-btn" onclick="openReviewForm('${itemId}')">写第一条评价</button>`:''}</div>`;
+  }
+  return list.map(r=>`
+    <div class="row-card">
+      <div class="icon" style="background:var(--gold-soft)">${r.userId===state.user.id?'我':'👤'}</div>
+      <div class="main">
+        <h4>${r.userName} <span style="color:var(--gold);font-weight:600">⭐ ${r.rating}</span></h4>
+        <p>${r.content}</p>
+        <p style="margin-top:4px">${r.time}</p>
+      </div>
+    </div>`).join('');
+}
+function openReviewForm(itemId){
+  if(!canReviewItem(itemId)){ toast('借用归还后才能评价'); return; }
+  const old = myReviewFor(itemId);
+  ui.reviewItemId = itemId;
+  ui.reviewRating = old ? old.rating : 5;
+  ui.reviewContent = old ? old.content : '';
+  renderReviewForm();
+}
+function renderReviewForm(){
+  const item = itemById(ui.reviewItemId);
+  const stars = [1,2,3,4,5];
+  openOverlay(`
+    <div class="sheet">
+      <h3>${myReviewFor(ui.reviewItemId)?'修改评价':'写评价'}</h3>
+      <div class="row-card" style="box-shadow:none;background:var(--bg);margin-bottom:12px">
+        <div class="icon" style="background:${gradStyle(item.grad)}">${item.emoji}</div>
+        <div class="main"><h4>${item.name}</h4><p>用完感觉如何？</p></div>
+      </div>
+      <div class="field">
+        <label>评分</label>
+        <div class="opt-row">
+          ${stars.map(s=>`<button class="opt ${ui.reviewRating===s?'active':''}" onclick="ui.reviewRating=${s};renderReviewForm()">${s} ⭐</button>`).join('')}
+        </div>
+      </div>
+      <div class="field">
+        <label>评价内容</label>
+        <textarea id="rv-content" oninput="ui.reviewContent=this.value" placeholder="好用吗？有没有要注意的？">${ui.reviewContent}</textarea>
+      </div>
+      <button class="btn-primary" onclick="submitReview()">提交评价</button>
+      <button class="btn-primary gray" onclick="closeOverlay()">取消</button>
+    </div>`);
+}
+function submitReview(){
+  const content = (document.getElementById('rv-content')?.value || ui.reviewContent || '').trim();
+  if(!content){ toast('请填写评价内容'); return; }
+  const itemId = ui.reviewItemId;
+  const existing = myReviewFor(itemId);
+  if(existing){
+    existing.rating = ui.reviewRating;
+    existing.content = content;
+    existing.time = '刚刚';
+  }else{
+    state.reviews = state.reviews || [];
+    state.reviews.unshift({
+      id:'rv'+Date.now(), itemId,
+      userId:state.user.id, userName:state.user.name,
+      rating:ui.reviewRating, content, time:'刚刚'
+    });
+  }
+  recalcItemRating(itemId);
+  saveState();
+  closeOverlay();
+  renderAll();
+  if(ui.detailId === itemId) renderDetail();
+  toast('评价已提交');
+}
+
 function renderReserveSummary(itemId){
   const qs = waitingQueue(itemId);
   if(!qs.length){
     return `<div class="empty" style="margin:8px 0"><div class="emoji">✅</div><p>当前没有人排队</p></div>`;
   }
-  return qs.map(r=>`
+  return `
+    <div class="note-card" style="margin:0 0 10px;background:var(--gold-soft);color:#8a6400">
+      预约/排队仅作到货通知，不预占物资。实际借用以工具间先到先得为准。
+    </div>
+  ` + qs.map(r=>`
     <div class="row-card">
       <div class="icon" style="background:var(--purple-soft)">👤</div>
       <div class="main">
-        <h4>${r.userName}${r.status==='ready'?' · 待确认':''}</h4>
+        <h4>${r.userName}${r.status==='ready'?' · 已通知':''}</h4>
         <p>${r.userAddr || personAddr(r.userId, r) || '未填写住址'}</p>
         <p>预约时间 ${r.createdAt} · 队列第 ${r.queue} 位</p>
         ${r.status==='ready' ? `<p style="color:var(--primary);font-weight:600">${reserveConfirmText(r)}</p>` : ''}
       </div>
       <div class="side">
-        <span class="tag ${r.status==='ready'?'ok':'purple'}">${r.status==='ready'?'待确认取用':'排队中'}</span>
-        ${r.status==='ready' && r.userId===state.user.id ? `<button class="mini-btn" onclick="confirmReadyReserve('${r.id}')">确认借用</button>` : ''}
+        <span class="tag ${r.status==='ready'?'ok':'purple'}">${r.status==='ready'?'待确认':'排队中'}</span>
+        ${r.status==='ready' && r.userId===state.user.id ? `
+          <button class="mini-btn" onclick="confirmReadyReserve('${r.id}')">确认借用</button>
+          <button class="mini-btn gray" onclick="cancelReserve('${r.id}')">取消</button>
+        ` : ''}
       </div>
     </div>`).join('');
 }
@@ -1439,11 +1620,6 @@ function openBorrow(id){
   const i = itemById(id);
   const allow = canUserBorrow(i, state.user.id);
   if(!allow.ok){
-    if(allow.reason === 'queue'){
-      openReserve(id);
-      toast(`已有 ${allow.queue} 人预约排队，请先排队`);
-      return;
-    }
     toast('该物资当前不可借');
     return;
   }
@@ -1519,6 +1695,16 @@ function submitBorrow(){
       ? {...r, status:'done'}
       : r
   );
+  // 其他人已到货的通知失效，回到队列等下次归还再通知
+  state.reserves = state.reserves.map(r => {
+    if(r.itemId === i.id && r.userId !== state.user.id && r.status === 'ready'){
+      const back = {...r, status:'waiting'};
+      delete back.readyAt;
+      delete back.expiresAt;
+      return back;
+    }
+    return r;
+  });
   // 其余人重新编号
   const stillWaiting = state.reserves.filter(r => r.itemId === i.id && r.status === 'waiting');
   stillWaiting.forEach((r, idx) => { r.queue = idx + 1; });
@@ -1534,7 +1720,7 @@ function submitBorrow(){
   ui.stack = [];
   ui.myTab = 'active';
   setMyTab('active');
-  toast(allow.fromQueue ? '按预约队列优先借出' : '借用成功');
+  toast('借用成功');
 }
 
 function openReserve(id){
@@ -1558,7 +1744,6 @@ function renderReserve(){
   const i = itemById(ui.borrowId);
   const qs = waitingQueue(i.id);
   const holder = currentHolder(i.id);
-  const canNow = canUserBorrow(i, state.user.id);
   document.getElementById('reserve-content').innerHTML = `
     <div class="list">
       <div class="row-card">
@@ -1567,39 +1752,65 @@ function renderReserve(){
           <h4>${i.name}</h4>
           <p>当前状态：${i.status==='borrowed'?'他人借出中':i.status==='available'?'已在库':'暂不可借'} · 已有 ${qs.length} 人排队</p>
           ${holder ? `<p style="margin-top:4px;color:var(--primary);font-weight:600">${holderLine(holder)}</p>` : ''}
-          ${i.status==='available' && qs.length && !canNow.ok ? `<p style="margin-top:4px;color:var(--warn)">物资已回库，但队首优先办理中</p>` : ''}
         </div>
         <div class="side">${statusTag(i.status)}</div>
       </div>
+    </div>
+    <div class="note-card" style="margin:0 16px 12px;background:var(--gold-soft);color:#8a6400">
+      <b>重要说明：</b>预约排队<b>仅到货通知，不预占物资</b>。实际借用顺序以工具间<b>先到先得</b>为准；若他人先借走，你继续排队等下次归还通知。
     </div>
     <div class="form">
       <div class="field">
         <label>预约规则</label>
         <div style="font-size:14px;color:#555;line-height:1.7">
-          预约用于「借出中」的物资排队。物资归还后按队列顺序通知；队首可优先借用。若物资已在库且无人排队，直接借用即可，无需预约。
+          1. 物资归还后就放在工具间，任何人都可直接借用；<br>
+          2. 预约只是排队通知，轮到你会提醒你，不会帮你锁住工具；<br>
+          3. 到货通知后请在时限内确认借用，超时自动取消并通知下一位。
         </div>
       </div>
       <div class="field">
-        <label>你的排队位置</label>
-        <div style="font-size:28px;font-weight:800;color:var(--purple)">第 ${qs.length+1} 位</div>
+        <label>预约情况</label>
+        <div style="font-size:28px;font-weight:800;color:var(--purple)">${qs.length} 人已预约</div>
+        <div style="font-size:12px;color:var(--sub);margin-top:4px">仅统计排队人数，不显示个人位次；到货后统一通知</div>
       </div>
       ${holder ? `
       <div class="field">
-        <label>预计可借时间</label>
+        <label>预计收到通知</label>
         <div style="font-size:15px;font-weight:700">${holder.userName}（${holder.userAddr || personAddr(holder.userId, holder) || '未填写住址'}）预计 ${holder.dueAt} 归还，归还后通知你</div>
       </div>` : `
       <div class="field">
-        <label>预计可借时间</label>
-        <div style="font-size:15px;font-weight:700">当前已在库，排到你即可办理</div>
+        <label>预计收到通知</label>
+        <div style="font-size:15px;font-weight:700">当前已在库，可直接去工具间借用</div>
       </div>`}
-      <div class="note-card" style="background:var(--purple-soft);color:#5b46c7">
-        预约不长期锁死物资：通知后请及时办理，逾期未取将让给下一位。
-      </div>
     </div>
   `;
 }
 function submitReserve(){
   const i = itemById(ui.borrowId);
+  if(!i) return;
+  const qs = waitingQueue(i.id);
+  openOverlay(`
+    <div class="dialog" style="border-top:4px solid var(--warn)">
+      <h3 style="color:var(--warn)">请确认预约规则</h3>
+      <div style="background:var(--warn-soft);color:#b85c2e;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.75;margin-bottom:12px">
+        <b>预约不等于占用物资</b><br>
+        · 仅作到货<b>通知</b>，<b>不会为你保留</b>「${i.name}」<br>
+        · 实际借用顺序：工具间<b>先到先得</b><br>
+        · 他人先借走时，你继续排队等下次通知<br>
+        · 轮到通知后若超时未确认，将<b>自动取消</b>
+      </div>
+      <p style="margin:0 0 16px;font-size:13px;color:#666">
+        确认加入预约队列？当前你将是第 <b>${qs.length+1}</b> 位。
+      </p>
+      <div style="display:grid;gap:10px">
+        <button class="btn-primary" onclick="confirmSubmitReserve()">我已知晓，确认预约</button>
+        <button class="btn-primary gray" onclick="closeOverlay()">再想想</button>
+      </div>
+    </div>`, true);
+}
+function confirmSubmitReserve(){
+  const i = itemById(ui.borrowId);
+  if(!i){ closeOverlay(); return; }
   const qs = waitingQueue(i.id);
   state.reserves.unshift({
     id:'q'+Date.now(), userId:state.user.id, userName:state.user.name, userAddr:formatAddr(state.user),
@@ -1608,10 +1819,11 @@ function submitReserve(){
   });
   state.messages.unshift({
     id:'m'+Date.now(), type:'reserve', title:'预约成功',
-    body:`你已加入「${i.name}」预约队列，当前第 ${qs.length+1} 位。`,
+    body:`你已加入「${i.name}」预约队列（当前 ${qs.length+1} 人已预约）。仅通知不预占，请以工具间先到先得为准。`,
     time:'刚刚', read:false
   });
   saveState();
+  closeOverlay();
   renderAll();
   showPage('my');
   ui.myTab='reserves';
@@ -1730,14 +1942,18 @@ function renderMy(){
         <div class="icon" style="background:${gradStyle(r.grad)}">${r.itemEmoji}</div>
         <div class="main">
           <h4>${r.itemName}</h4>
-          <p>${r.createdAt} · ${r.status==='ready'?'可取用':r.status==='waiting'?'排队中':r.status==='expired'?'已超时取消':'已取消'} · 队列第 ${r.queue} 位</p>
+          <p>${r.createdAt} · ${r.status==='ready'?'已通知取用':r.status==='waiting'?'排队等通知':r.status==='expired'?'超时自动取消':'已取消'} · 队列第 ${r.queue} 位</p>
           ${r.status==='ready' ? `<p style="margin-top:4px;color:${left>0?'var(--primary)':'var(--danger)'};font-weight:600">${reserveConfirmText(r)}</p>` : ''}
+          ${r.status==='waiting' ? `<p style="margin-top:4px;color:var(--sub)">仅通知不预占，到工具间先到先得</p>` : ''}
         </div>
         <div class="side">
           <span class="tag ${r.status==='ready'?(left>0?'ok':'bad'):r.status==='waiting'?'purple':'gray'}">${r.status==='ready'?(left>0?'待确认':'已超时'):r.status==='waiting'?'排队中':r.status==='expired'?'已取消':'已取消'}</span>
-          ${r.status==='waiting'?`<button class="mini-btn gray" onclick="cancelReserve('${r.id}')">取消</button>`:''}
-          ${r.status==='ready' && left>0?`<button class="mini-btn" onclick="confirmReadyReserve('${r.id}')">确认借用</button>`:''}
-          ${r.status==='ready' && left<=0?`<button class="mini-btn gray" onclick="cancelReserve('${r.id}')">关闭</button>`:''}
+          ${r.status==='waiting'?`<button class="mini-btn gray" onclick="cancelReserve('${r.id}')">取消预约</button>`:''}
+          ${r.status==='ready' && left>0?`
+            <button class="mini-btn" onclick="confirmReadyReserve('${r.id}')">确认借用</button>
+            <button class="mini-btn gray" onclick="cancelReserve('${r.id}')">取消预约</button>
+          `:''}
+          ${r.status==='ready' && left<=0?`<button class="mini-btn gray" onclick="cancelReserve('${r.id}')">取消预约</button>`:''}
         </div>
       </div>`;
     }).join('');
@@ -1767,6 +1983,7 @@ function renderMy(){
           ${['borrowed','overdue','pending'].includes(r.status)
             ? `<button class="mini-btn" onclick="openReturn('${r.id}')">归还</button>`
             : `<button class="mini-btn ghost" onclick="openDetail('${r.itemId}')">再看一眼</button>`}
+          ${r.status==='returned'?`<button class="mini-btn ghost" onclick="openReviewForm('${r.itemId}')">${myReviewFor(r.itemId)?'改评价':'去评价'}</button>`:''}
         </div>
       </div>`;
   }).join('');
@@ -1778,7 +1995,21 @@ function emptyBox(emoji, text, sub, action){
 function goHome(){ showPage('home'); ui.stack=[]; }
 function cancelReserve(id){
   const r = state.reserves.find(x=>x.id===id);
-  if(r){ r.status='cancelled'; saveState(); renderMy(); toast('已取消预约'); }
+  if(!r) return;
+  const wasReady = r.status === 'ready';
+  r.status = 'cancelled';
+  delete r.readyAt;
+  delete r.expiresAt;
+  const stillWaiting = state.reserves.filter(x=>x.itemId===r.itemId && x.status==='waiting');
+  stillWaiting.forEach((x, idx)=>{ x.queue = idx + 1; });
+  const next = stillWaiting[0];
+  const item = itemById(r.itemId);
+  if(wasReady && item && item.status==='available' && next){
+    markReserveReady(next);
+  }
+  saveState();
+  renderAll();
+  toast('已取消预约');
 }
 function confirmReadyReserve(id){
   const r = state.reserves.find(x=>x.id===id);
@@ -2135,7 +2366,7 @@ function renderAdminItems(){
       <div class="thumb" style="background:${gradStyle(i.grad)};overflow:hidden">${itemThumbInner(i, 26)}</div>
       <div class="info">
         <h4>${i.name}</h4>
-        <p>${i.loc} · 借出 ${i.borrowCount} 次 · ${i.condition}</p>
+        <p>${i.loc} · 借用 ${i.borrowCount} 次 · ${i.condition}</p>
         ${holder ? `<p style="color:var(--primary);font-weight:600;margin-top:2px">${holderLine(holder)}</p>` : ''}
         <div style="margin-top:6px">${statusTag(i.status)}</div>
       </div>
@@ -2744,6 +2975,19 @@ function renderRules(){
   document.getElementById('rules-content').innerHTML = `
     <div class="form">
       <div class="field">
+        <label>小区名称</label>
+        <input value="${s.communityName||''}" oninput="ui.ruleCommunity=this.value" placeholder="桃境满元里" />
+      </div>
+      <div class="field">
+        <label>工具间位置</label>
+        <input value="${s.toolRoomLocation||''}" oninput="ui.ruleLocation=this.value" placeholder="10幢一楼" />
+      </div>
+      <div class="field">
+        <label>工具间门禁密码</label>
+        <input value="${s.toolRoomPassword||''}" oninput="ui.rulePassword=this.value" placeholder="12345678" maxlength="16" />
+        <div style="font-size:11px;color:var(--sub);margin-top:6px">居民首页可见；请妥善保管，可随时修改</div>
+      </div>
+      <div class="field">
         <label>默认借用天数</label>
         <div class="opt-row">
           ${[1,3,7,14,30].map(d=>`<button class="opt ${s.defaultDays===d?'active':''}" onclick="setRule('defaultDays',${d})">${d} 天</button>`).join('')}
@@ -2784,6 +3028,15 @@ function renderRules(){
 function setRule(key,val){ state.settings[key]=val; renderRules(); }
 function toggleRule(key){ state.settings[key]=!state.settings[key]; renderRules(); }
 function saveRules(){
+  if(ui.ruleCommunity !== undefined && ui.ruleCommunity !== null && String(ui.ruleCommunity).trim()){
+    state.settings.communityName = String(ui.ruleCommunity).trim();
+  }
+  if(ui.ruleLocation !== undefined && ui.ruleLocation !== null && String(ui.ruleLocation).trim()){
+    state.settings.toolRoomLocation = String(ui.ruleLocation).trim();
+  }
+  if(ui.rulePassword !== undefined && ui.rulePassword !== null && String(ui.rulePassword).trim()){
+    state.settings.toolRoomPassword = String(ui.rulePassword).trim();
+  }
   saveState(); renderAll();
   toast('规则已保存');
   goBack();
