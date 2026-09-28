@@ -1,0 +1,2824 @@
+<!-- AI生成 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>共享工具间</title>
+<style>
+:root{
+  --bg:#f5f6f7; --card:#fff; --ink:#191919; --sub:#8a8a8a; --line:#ececec;
+  --primary:#07c160; --primary-soft:#e8f8ef;
+  --warn:#ff976a; --warn-soft:#fff3ec;
+  --danger:#fa5151; --danger-soft:#ffefef;
+  --gold:#f7b500; --gold-soft:#fff8e6;
+  --info:#10aeff; --info-soft:#e8f7ff;
+  --purple:#7b61ff; --purple-soft:#f0edff;
+  --shadow:0 8px 28px rgba(17,24,39,.08);
+  --radius:16px; --tab-h:64px;
+  --safe-b:env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;min-height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:#d9dde3; color:var(--ink); line-height:1.5;
+}
+button,input,textarea,select{font:inherit;}
+button{border:0;background:none;cursor:pointer;color:inherit;}
+#app{
+  max-width:430px; min-height:100vh; margin:0 auto; background:var(--bg);
+  position:relative; box-shadow:0 0 0 1px rgba(0,0,0,.04), 0 20px 60px rgba(0,0,0,.12);
+}
+.page{min-height:100vh; padding-bottom:calc(var(--tab-h) + var(--safe-b) + 12px);}
+.page.no-tab{padding-bottom:calc(28px + var(--safe-b));}
+.hide{display:none !important;}
+
+.topbar{
+  position:sticky; top:0; z-index:20;
+  background:rgba(245,246,247,.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  padding:14px 16px 10px; display:flex; align-items:center; gap:10px;
+}
+.topbar h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.5px;}
+.topbar .sub{font-size:12px;color:var(--sub);margin-top:2px;}
+.topbar .grow{flex:1;}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;background:var(--card);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);font-size:18px;
+}
+.navbar{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;
+  padding:12px 12px 10px;background:rgba(245,246,247,.94);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.navbar .title{flex:1;text-align:center;font-size:17px;font-weight:700;}
+.navbar .icon-btn{width:38px;height:38px;box-shadow:none;background:var(--card);}
+.navbar .text-btn{font-size:14px;color:var(--primary);font-weight:600;padding:8px 6px;}
+
+.search-box{
+  margin:0 16px 12px; background:var(--card); border-radius:14px;
+  display:flex; align-items:center; gap:8px; padding:12px 14px; box-shadow:var(--shadow);
+}
+.search-box input{border:0;outline:0;flex:1;background:transparent;font-size:15px;min-width:0;}
+.search-box input::placeholder{color:#b0b0b0;}
+
+.chip-row{
+  display:flex; gap:8px; overflow-x:auto; padding:0 16px 12px; scrollbar-width:none;
+}
+.chip-row::-webkit-scrollbar{display:none;}
+.chip{
+  flex:0 0 auto; padding:8px 14px; border-radius:999px;
+  background:var(--card); color:#555; font-size:13px; border:1px solid transparent;
+}
+.chip.active{
+  background:var(--primary-soft); color:var(--primary);
+  border-color:rgba(7,193,96,.25); font-weight:600;
+}
+
+.section-title{
+  padding:4px 16px 10px; display:flex; align-items:center; justify-content:space-between;
+}
+.section-title h2{margin:0;font-size:16px;font-weight:700;}
+.section-title .link{font-size:13px;color:var(--primary);font-weight:600;}
+.card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);}
+.pad{padding:16px;}
+
+.item-list{padding:0 16px 20px; display:grid; gap:12px;}
+.item-card{
+  background:var(--card); border-radius:18px; overflow:hidden;
+  box-shadow:var(--shadow); display:flex; cursor:pointer;
+}
+.item-card:active{transform:scale(.985);}
+.item-thumb{
+  width:112px; height:112px; flex:0 0 112px; position:relative;
+  display:flex; align-items:center; justify-content:center;
+}
+.item-thumb .emoji{font-size:42px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.12));}
+.item-thumb .loc{
+  position:absolute; left:8px; bottom:8px; font-size:10px;
+  padding:2px 7px; border-radius:999px; background:rgba(255,255,255,.92);
+  color:#555; font-weight:600;
+}
+.item-body{
+  flex:1; padding:12px 12px 12px 14px; display:flex; flex-direction:column;
+  justify-content:space-between; min-width:0;
+}
+.item-body h3{
+  margin:0 0 4px; font-size:15px; font-weight:700;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.item-meta{
+  font-size:12px; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.item-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;}
+.tag{
+  display:inline-flex; align-items:center; gap:4px; font-size:11px;
+  padding:3px 8px; border-radius:999px; font-weight:600; white-space:nowrap;
+}
+.tag.ok{background:var(--primary-soft); color:var(--primary);}
+.tag.busy{background:var(--warn-soft); color:#e67040;}
+.tag.bad{background:var(--danger-soft); color:var(--danger);}
+.tag.info{background:var(--info-soft); color:#0b8dcd;}
+.tag.gold{background:var(--gold-soft); color:#c48a00;}
+.tag.gray{background:#f2f2f2; color:#777;}
+.tag.purple{background:var(--purple-soft); color:var(--purple);}
+.mini-btn{
+  font-size:12px; font-weight:700; padding:7px 12px; border-radius:999px;
+  background:var(--primary); color:#fff;
+}
+.mini-btn.ghost{background:var(--primary-soft); color:var(--primary);}
+.mini-btn.warn{background:var(--warn-soft); color:#e67040;}
+.mini-btn.danger{background:var(--danger-soft); color:var(--danger);}
+.mini-btn.gray{background:#f3f3f3; color:#666;}
+
+/* hero / score */
+.hero{
+  margin:0 16px 14px; border-radius:20px; padding:18px 18px 16px;
+  background:linear-gradient(135deg,#07c160 0%,#34d399 55%,#5eead4 100%);
+  color:#fff; box-shadow:0 12px 30px rgba(7,193,96,.28);
+}
+.hero .row{display:flex; justify-content:space-between; align-items:center;}
+.hero .label{font-size:12px; opacity:.9;}
+.hero .score{font-size:40px; font-weight:800; line-height:1.1; margin-top:2px;}
+.hero .hint{font-size:12px; opacity:.92; margin-top:4px;}
+.hero .pill{
+  background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.35);
+  padding:8px 12px; border-radius:999px; font-size:12px; font-weight:600;
+}
+.hero-actions{display:flex; gap:8px; margin-top:14px;}
+.hero-actions .btn{
+  flex:1; background:rgba(255,255,255,.95); color:#07c160; border-radius:12px;
+  padding:11px 10px; font-weight:700; font-size:13px;
+}
+.hero-actions .btn.alt{background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.35);}
+
+/* stats */
+.stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:0 16px 14px;}
+.stat{
+  background:var(--card); border-radius:16px; padding:14px 10px;
+  box-shadow:var(--shadow); text-align:center;
+}
+.stat .num{font-size:22px; font-weight:800; line-height:1.2;}
+.stat .txt{font-size:11px; color:var(--sub); margin-top:4px;}
+.stat.warn .num{color:var(--warn);}
+.stat.danger .num{color:var(--danger);}
+.stat.ok .num{color:var(--primary);}
+.stat.gold .num{color:var(--gold);}
+.stat.info .num{color:var(--info);}
+
+/* tabs in page */
+.seg{
+  margin:0 16px 12px; background:#ebedf0; border-radius:12px; padding:4px; display:flex;
+}
+.seg button{
+  flex:1; padding:9px 8px; border-radius:10px; font-size:13px; color:#666; font-weight:600;
+}
+.seg button.active{background:#fff; color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.06);}
+
+/* bottom tab */
+.tabbar{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:430px;
+  height:calc(var(--tab-h) + var(--safe-b)); padding:8px 8px var(--safe-b);
+  background:rgba(255,255,255,.96); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgba(0,0,0,.05); display:flex; z-index:30;
+}
+.tabbar button{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:2px; color:#9a9a9a; font-size:10px; position:relative;
+}
+.tabbar button .ic{font-size:20px; line-height:1;}
+.tabbar button.active{color:var(--primary); font-weight:700;}
+.tabbar .dot{
+  position:absolute; top:2px; right:calc(50% - 18px); min-width:16px; height:16px;
+  border-radius:999px; background:var(--danger); color:#fff; font-size:10px;
+  display:flex; align-items:center; justify-content:center; padding:0 4px; font-weight:700;
+}
+
+/* forms */
+.form{padding:0 16px 20px; display:grid; gap:12px;}
+.field{
+  background:var(--card); border-radius:14px; padding:12px 14px;
+  box-shadow:var(--shadow);
+}
+.field label{display:block; font-size:12px; color:var(--sub); margin-bottom:6px;}
+.field input,.field textarea,.field select{
+  width:100%; border:0; outline:0; background:transparent; font-size:15px; color:var(--ink);
+}
+.field textarea{min-height:88px; resize:vertical;}
+.field .opt-row{display:flex; flex-wrap:wrap; gap:8px;}
+.opt{
+  padding:8px 12px; border-radius:10px; background:#f4f5f7; font-size:13px; color:#555;
+  border:1px solid transparent;
+}
+.opt.active{background:var(--primary-soft); color:var(--primary); border-color:rgba(7,193,96,.3); font-weight:700;}
+.switch-row{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  background:var(--card); border-radius:14px; padding:14px; box-shadow:var(--shadow);
+}
+.switch{
+  width:48px; height:28px; border-radius:999px; background:#ddd; position:relative; transition:.2s;
+}
+.switch.on{background:var(--primary);}
+.switch i{
+  position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
+  background:#fff; transition:.2s; box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+.switch.on i{left:23px;}
+
+.check-row{
+  display:flex; gap:10px; align-items:flex-start; font-size:13px; color:#555;
+  padding:4px 2px;
+}
+.check-box{
+  width:20px; height:20px; border-radius:6px; border:1.5px solid #cfcfcf; flex:0 0 20px;
+  display:flex; align-items:center; justify-content:center; margin-top:1px; color:#fff; font-size:12px;
+}
+.check-box.on{background:var(--primary); border-color:var(--primary);}
+
+.btn-primary{
+  width:100%; background:var(--primary); color:#fff; border-radius:14px;
+  padding:15px 16px; font-size:16px; font-weight:700;
+  box-shadow:0 10px 24px rgba(7,193,96,.25);
+}
+.btn-primary:disabled{opacity:.45; box-shadow:none;}
+.btn-primary.ghost{
+  background:var(--primary-soft); color:var(--primary); box-shadow:none;
+}
+.btn-primary.danger{background:var(--danger); box-shadow:0 10px 24px rgba(250,81,81,.25);}
+.btn-primary.gray{background:#ebedf0; color:#666; box-shadow:none;}
+.btn-primary.outline{
+  background:#fff; color:var(--ink); border:1px solid var(--line); box-shadow:var(--shadow);
+}
+.footer-actions{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:430px;
+  padding:12px 16px calc(12px + var(--safe-b));
+  background:rgba(255,255,255,.96); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border-top:1px solid rgba(0,0,0,.05); z-index:25; display:grid; gap:10px;
+}
+.footer-actions .row2{display:flex; gap:10px;}
+.footer-actions .row2>*{flex:1;}
+
+/* detail */
+.gallery{
+  margin:0 16px 12px; border-radius:20px; overflow:hidden; height:220px; position:relative;
+  box-shadow:var(--shadow);
+}
+.gallery .slide{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+}
+.gallery .slide .emoji{font-size:88px; filter:drop-shadow(0 10px 18px rgba(0,0,0,.16));}
+.gallery .dots{
+  position:absolute; left:0; right:0; bottom:12px; display:flex; justify-content:center; gap:6px;
+}
+.gallery .dots span{
+  width:7px; height:7px; border-radius:999px; background:rgba(255,255,255,.55);
+}
+.gallery .dots span.on{background:#fff; width:18px;}
+.gallery .cat{
+  position:absolute; left:12px; top:12px; font-size:11px; font-weight:700;
+  background:rgba(255,255,255,.92); padding:5px 10px; border-radius:999px; color:#444;
+}
+.detail-title{
+  margin:0 16px 10px; background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow);
+}
+.detail-title h2{margin:0 0 8px; font-size:22px; line-height:1.3;}
+.detail-title .tags{display:flex; flex-wrap:wrap; gap:8px;}
+.kv{
+  margin:0 16px 12px; background:var(--card); border-radius:18px;
+  box-shadow:var(--shadow); overflow:hidden;
+}
+.kv .row{
+  display:flex; gap:12px; padding:13px 16px; border-bottom:1px solid var(--line); font-size:14px;
+}
+.kv .row:last-child{border-bottom:0;}
+.kv .k{width:72px; color:var(--sub); flex:0 0 72px;}
+.kv .v{flex:1; color:var(--ink);}
+.note-card{
+  margin:0 16px 16px; padding:14px 16px; border-radius:16px;
+  background:var(--gold-soft); color:#8a6400; font-size:13px; line-height:1.6;
+}
+
+/* lists */
+.list{margin:0 16px 16px; display:grid; gap:10px;}
+.row-card{
+  background:var(--card); border-radius:16px; padding:14px; box-shadow:var(--shadow);
+  display:flex; gap:12px; align-items:center;
+}
+.row-card .icon{
+  width:44px; height:44px; border-radius:14px; display:flex; align-items:center;
+  justify-content:center; font-size:22px; flex:0 0 44px;
+}
+.row-card .main{flex:1; min-width:0;}
+.row-card .main h4{margin:0 0 3px; font-size:15px; font-weight:700;}
+.row-card .main p{margin:0; font-size:12px; color:var(--sub);}
+.row-card .side{display:flex; flex-direction:column; align-items:flex-end; gap:6px;}
+
+.msg-item{
+  display:flex; gap:12px; padding:14px 16px; margin:0 16px 10px;
+  background:var(--card); border-radius:16px; box-shadow:var(--shadow);
+}
+.msg-item.unread{border-left:3px solid var(--primary);}
+.msg-item .icon{width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px;}
+.msg-item .body{flex:1; min-width:0;}
+.msg-item h4{margin:0 0 4px; font-size:14px; font-weight:700;}
+.msg-item p{margin:0; font-size:12px; color:var(--sub); line-height:1.5;}
+.msg-item .time{font-size:11px; color:#b0b0b0; margin-top:6px;}
+
+/* empty */
+.empty{
+  margin:40px 24px; text-align:center; color:var(--sub);
+}
+.empty .emoji{font-size:48px; margin-bottom:10px;}
+.empty p{margin:0 0 14px; font-size:14px;}
+
+/* modal / sheet */
+.mask{
+  position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50;
+  display:flex; align-items:flex-end; justify-content:center;
+}
+.mask.center{align-items:center; padding:24px;}
+.sheet{
+  width:100%; max-width:430px; background:#fff; border-radius:22px 22px 0 0;
+  padding:18px 18px calc(18px + var(--safe-b)); max-height:85vh; overflow:auto;
+}
+.dialog{
+  width:100%; max-width:340px; background:#fff; border-radius:20px; padding:20px;
+}
+.dialog h3{margin:0 0 8px; font-size:18px;}
+.dialog p{margin:0 0 16px; font-size:14px; color:#666;}
+.sheet h3{margin:0 0 14px; font-size:18px; font-weight:700;}
+
+/* scan */
+.scan-wrap{
+  width:240px; height:240px; margin:10px auto 18px; position:relative;
+  border-radius:20px; overflow:hidden;
+  background:
+    linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+    repeating-linear-gradient(0deg, #2a2f36 0 12px, #24282e 12px 24px);
+}
+.scan-frame{
+  position:absolute; inset:28px; border:2px solid rgba(255,255,255,.55); border-radius:14px;
+}
+.scan-frame::before,.scan-frame::after{
+  content:""; position:absolute; width:28px; height:28px; border:3px solid var(--primary);
+}
+.scan-frame::before{left:-2px; top:-2px; border-right:0; border-bottom:0; border-radius:10px 0 0 0;}
+.scan-frame::after{right:-2px; bottom:-2px; border-left:0; border-top:0; border-radius:0 0 10px 0;}
+.scan-line{
+  position:absolute; left:30px; right:30px; height:2px; background:var(--primary);
+  box-shadow:0 0 12px rgba(7,193,96,.9); animation:scanMove 2.2s ease-in-out infinite;
+}
+@keyframes scanMove{
+  0%,100%{top:36px; opacity:.4;}
+  50%{top:198px; opacity:1;}
+}
+.scan-actions{display:grid; gap:10px;}
+
+/* admin list table-ish */
+.admin-item{
+  background:var(--card); border-radius:16px; padding:12px; box-shadow:var(--shadow);
+  display:flex; gap:12px; align-items:center;
+}
+.admin-item .thumb{
+  width:56px; height:56px; border-radius:14px; display:flex; align-items:center;
+  justify-content:center; font-size:26px; flex:0 0 56px;
+}
+.admin-item .info{flex:1; min-width:0;}
+.admin-item .info h4{margin:0 0 4px; font-size:14px; font-weight:700;}
+.admin-item .info p{margin:0; font-size:11px; color:var(--sub);}
+.admin-item .ops{display:flex; flex-direction:column; gap:6px;}
+
+/* login */
+.login-page{
+  min-height:100vh; display:flex; flex-direction:column;
+  background:linear-gradient(165deg,#0f2a1f 0%,#0c3b28 40%,#07c160 130%);
+  color:#fff; padding:28px 24px calc(28px + var(--safe-b));
+}
+.login-page .logo{
+  width:88px; height:88px; border-radius:24px; background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center;
+  font-size:44px; margin:48px 0 20px;
+}
+.login-page h1{margin:0 0 8px; font-size:32px; letter-spacing:1px;}
+.login-page .desc{margin:0; opacity:.85; font-size:14px; line-height:1.7; max-width:280px;}
+.login-page .grow{flex:1;}
+.login-btn{
+  width:100%; background:#fff; color:#07c160; border-radius:16px;
+  padding:16px; font-size:17px; font-weight:800; margin-bottom:12px;
+}
+.login-btn.alt{
+  background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.22);
+  font-weight:600; font-size:15px;
+}
+.login-tip{font-size:11px; opacity:.65; text-align:center; line-height:1.7;}
+
+/* toast */
+.toast{
+  position:fixed; left:50%; top:18%; transform:translateX(-50%);
+  background:rgba(25,25,25,.88); color:#fff; padding:12px 18px; border-radius:12px;
+  font-size:14px; z-index:80; max-width:80%; text-align:center;
+}
+
+/* credit page bars */
+.bar-track{height:10px; background:#eef0f2; border-radius:999px; overflow:hidden;}
+.bar-fill{height:100%; border-radius:999px; background:linear-gradient(90deg,#34d399,#07c160);}
+.rule-item{
+  display:flex; gap:10px; padding:12px 0; border-bottom:1px solid var(--line); font-size:13px;
+}
+.rule-item:last-child{border-bottom:0;}
+.rule-item .sign{
+  width:22px; height:22px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800; flex:0 0 22px;
+}
+.rule-item .sign.plus{background:var(--primary-soft); color:var(--primary);}
+.rule-item .sign.minus{background:var(--danger-soft); color:var(--danger);}
+
+/* role banner */
+.role-banner{
+  margin:0 16px 12px; padding:12px 14px; border-radius:14px;
+  background:var(--purple-soft); color:#5b46c7; font-size:12px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.role-banner strong{font-size:13px;}
+
+/* responsive-ish */
+@media (max-width:360px){
+  .item-thumb{width:96px; height:96px; flex-basis:96px;}
+  .hero .score{font-size:34px;}
+}
+</style>
+</head>
+<body>
+<p data-aigc-mark="1" style="margin:0 0 8px;font-size:10px;line-height:1.3;color:#6b6560;font-weight:400;">AI生成</p>
+
+<div id="app">
+  <!-- LOGIN -->
+  <section id="page-login" class="login-page">
+    <div class="logo">🧰</div>
+    <h1>共享工具间</h1>
+    <p class="desc">邻里互助 · 物尽其用<br>借工具、还工具、管物资，都在这里</p>
+    <div class="grow"></div>
+    <button class="login-btn" onclick="login('resident')">微信一键登录（居民）</button>
+    <button class="login-btn alt" onclick="login('admin')">管理员登录</button>
+    <p class="login-tip">原型演示：数据保存在本机，刷新后可点「重置演示数据」</p>
+  </section>
+
+  <!-- HOME -->
+  <section id="page-home" class="page hide">
+    <div class="topbar">
+      <div>
+        <h1>共享工具间</h1>
+        <div class="sub">阳光小区 · 3号楼东侧工具间</div>
+      </div>
+      <div class="grow"></div>
+      <button class="icon-btn" onclick="openScan()" title="扫码">📷</button>
+    </div>
+    <div class="search-box">
+      <span>🔎</span>
+      <input id="search-input" placeholder="搜索工具 / 推车 / 梯子…" oninput="onSearch(this.value)" />
+    </div>
+    <div class="chip-row" id="cat-chips"></div>
+    <div class="section-title">
+      <h2 id="home-list-title">全部物资</h2>
+      <span class="link" onclick="setFilter('available')">只看可借</span>
+    </div>
+    <div class="item-list" id="home-list"></div>
+  </section>
+
+  <!-- DETAIL -->
+  <section id="page-detail" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">物资详情</div>
+      <button class="text-btn" onclick="openScan()">扫码</button>
+    </div>
+    <div id="detail-content"></div>
+    <div class="footer-actions" id="detail-actions"></div>
+  </section>
+
+  <!-- BORROW -->
+  <section id="page-borrow" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title" id="borrow-title">借用确认</div>
+      <div style="width:38px"></div>
+    </div>
+    <div id="borrow-content"></div>
+    <div class="footer-actions">
+      <button class="btn-primary" id="borrow-submit" onclick="submitBorrow()">提交借用</button>
+    </div>
+  </section>
+
+  <!-- RESERVE -->
+  <section id="page-reserve" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">预约排队</div>
+      <div style="width:38px"></div>
+    </div>
+    <div id="reserve-content"></div>
+    <div class="footer-actions">
+      <button class="btn-primary" onclick="submitReserve()">确认预约</button>
+    </div>
+  </section>
+
+  <!-- MY BORROWS -->
+  <section id="page-my" class="page hide">
+    <div class="topbar">
+      <div>
+        <h1>我的借用</h1>
+        <div class="sub">进行中与历史记录</div>
+      </div>
+    </div>
+    <div class="seg" id="my-seg">
+      <button class="active" onclick="setMyTab('active')">进行中</button>
+      <button onclick="setMyTab('history')">历史</button>
+      <button onclick="setMyTab('reserves')">预约</button>
+    </div>
+    <div class="list" id="my-list"></div>
+  </section>
+
+  <!-- RETURN -->
+  <section id="page-return" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">归还登记</div>
+      <div style="width:38px"></div>
+    </div>
+    <div id="return-content"></div>
+    <div class="footer-actions">
+      <button class="btn-primary" onclick="submitReturn()">提交归还</button>
+    </div>
+  </section>
+
+  <!-- MESSAGES -->
+  <section id="page-msg" class="page hide">
+    <div class="topbar">
+      <div>
+        <h1>消息</h1>
+        <div class="sub">到期提醒 · 预约到货 · 系统通知</div>
+      </div>
+      <div class="grow"></div>
+      <button class="text-btn" onclick="markAllRead()" style="color:var(--primary);font-weight:700;">全部已读</button>
+    </div>
+    <div class="list" id="msg-list"></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="page-me" class="page hide">
+    <div class="topbar">
+      <div>
+        <h1>我的</h1>
+        <div class="sub">身份 · 信用 · 设置</div>
+      </div>
+    </div>
+    <div id="me-content"></div>
+  </section>
+
+  <!-- CREDIT -->
+  <section id="page-credit" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">信用分</div>
+      <div style="width:38px"></div>
+    </div>
+    <div id="credit-content"></div>
+  </section>
+
+  <!-- FEEDBACK -->
+  <section id="page-feedback" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">意见反馈</div>
+      <button class="text-btn" onclick="openFeedbackForm()">写反馈</button>
+    </div>
+    <div id="feedback-content"></div>
+  </section>
+
+  <!-- ADMIN FEEDBACK -->
+  <section id="page-admin-feedback" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">反馈处理</div>
+      <div style="width:38px"></div>
+    </div>
+    <div class="seg" id="fb-seg">
+      <button class="active" onclick="setFeedbackTab('open')">待处理</button>
+      <button onclick="setFeedbackTab('doing')">处理中</button>
+      <button onclick="setFeedbackTab('done')">已处理</button>
+    </div>
+    <div class="list" id="admin-feedback-list"></div>
+  </section>
+
+  <!-- ADMIN HOME -->
+  <section id="page-admin" class="page hide">
+    <div class="topbar">
+      <div>
+        <h1>管理台</h1>
+        <div class="sub">多位管理员可共同维护</div>
+      </div>
+      <div class="grow"></div>
+      <button class="icon-btn" onclick="openScan()">📷</button>
+    </div>
+    <div id="admin-content"></div>
+  </section>
+
+  <!-- ADMIN ITEMS -->
+  <section id="page-admin-items" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">物资管理</div>
+      <button class="text-btn" onclick="openItemEditor(null)">新增</button>
+    </div>
+    <div class="chip-row" id="admin-filter-chips"></div>
+    <div class="list" id="admin-items-list"></div>
+  </section>
+
+  <!-- ADMIN ITEM EDITOR -->
+  <section id="page-admin-edit" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title" id="admin-edit-title">编辑物资</div>
+      <div style="width:38px"></div>
+    </div>
+    <div id="admin-edit-content"></div>
+    <div class="footer-actions">
+      <button class="btn-primary" onclick="saveItem()">保存物资</button>
+    </div>
+  </section>
+
+  <!-- ADMIN BORROW DESK -->
+  <section id="page-admin-desk" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">借还台</div>
+      <div style="width:38px"></div>
+    </div>
+    <div class="seg" id="desk-seg">
+      <button class="active" onclick="setDeskTab('borrowed')">借出中</button>
+      <button onclick="setDeskTab('overdue')">逾期</button>
+      <button onclick="setDeskTab('returned')">已还</button>
+    </div>
+    <div class="list" id="desk-list"></div>
+  </section>
+
+  <!-- ADMIN DAMAGE -->
+  <section id="page-admin-damage" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">损坏报修</div>
+      <div style="width:38px"></div>
+    </div>
+    <div class="list" id="damage-list"></div>
+    <div class="footer-actions">
+      <button class="btn-primary outline" onclick="openDamageCreate()">+ 登记损坏</button>
+    </div>
+  </section>
+
+  <!-- SETTINGS-ish admin rules -->
+  <section id="page-admin-rules" class="page no-tab hide">
+    <div class="navbar">
+      <button class="icon-btn" onclick="goBack()">←</button>
+      <div class="title">借用规则</div>
+      <div style="width:38px"></div>
+    </div>
+    <div id="rules-content"></div>
+    <div class="footer-actions">
+      <button class="btn-primary" onclick="saveRules()">保存规则</button>
+    </div>
+  </section>
+
+  <!-- BOTTOM TAB -->
+  <nav id="tabbar" class="tabbar hide">
+    <button data-tab="home" onclick="switchTab('home')"><span class="ic">🏠</span>首页</button>
+    <button data-tab="my" onclick="switchTab('my')"><span class="ic">📦</span>借用</button>
+    <button data-tab="scan" onclick="openScan()"><span class="ic">📷</span>扫码</button>
+    <button data-tab="msg" onclick="switchTab('msg')"><span class="ic">🔔</span>消息<span class="dot hide" id="msg-dot">0</span></button>
+    <button data-tab="me" onclick="switchTab('me')"><span class="ic">👤</span>我的</button>
+  </nav>
+
+  <!-- overlays -->
+  <div id="overlay"></div>
+  <div id="toast" class="toast hide"></div>
+</div>
+
+<script>
+/* =========================
+   State & Demo Data
+   ========================= */
+const GRADIENTS = {
+  orange:'linear-gradient(145deg,#ffd8a8,#ff9f43)',
+  blue:'linear-gradient(145deg,#a5d8ff,#4dabf7)',
+  green:'linear-gradient(145deg,#b2f2bb,#51cf66)',
+  purple:'linear-gradient(145deg,#d0bfff,#7b61ff)',
+  pink:'linear-gradient(145deg,#fcc2d8,#f06595)',
+  teal:'linear-gradient(145deg,#99e9f2,#22b8cf)',
+  yellow:'linear-gradient(145deg,#ffec99,#fcc419)',
+  red:'linear-gradient(145deg,#ffc9c9,#ff6b6b)',
+  slate:'linear-gradient(145deg,#dee2e6,#868e96)'
+};
+
+function defaultData(){
+  return {
+    settings:{
+      defaultDays:7,
+      maxDays:0, // 0 = 不限制
+      allowReserve:true,
+      creditEnabled:true,
+      reserveConfirmHours:12
+    },
+    categories:[
+      {id:'power', name:'电动工具'},
+      {id:'hand', name:'手动工具'},
+      {id:'move', name:'搬运'},
+      {id:'garden', name:'园艺'},
+      {id:'clean', name:'清洁'},
+      {id:'life', name:'生活杂物'},
+      {id:'care', name:'应急'}
+    ],
+    user:{
+      id:'u1', name:'林小雨', avatar:'👩', role:'resident',
+      phone:'138****2210',
+      building:'3号楼', unit:'2单元', room:'1802',
+      credit:100, creditUpdatedAt:'今天 09:20',
+      isAdmin:false, adminLabel:'邻里志愿者'
+    },
+    people:[
+      {id:'u1', name:'林小雨', building:'3号楼', unit:'2单元', room:'1802', phone:'138****2210'},
+      {id:'u2', name:'张叔', building:'5号楼', unit:'1单元', room:'0901', phone:'139****4408'},
+      {id:'u3', name:'王阿姨', building:'2号楼', unit:'3单元', room:'1206', phone:'136****7788'},
+      {id:'u4', name:'李哥', building:'3号楼', unit:'1单元', room:'0503', phone:'135****2299'}
+    ],
+    items:[
+      {
+        id:'i1', name:'人字梯（3米）', emoji:'🪜', cat:'move', grad:'orange',
+        desc:'铝合金人字梯，最高3米，适合换灯泡、换窗帘、擦高处。使用时请两人配合或靠墙固定。',
+        loc:'工具间 A-01', status:'borrowed', condition:'良好',
+        tags:['高频','需二人'], rating:4.8, borrowCount:36,
+        gallery:['整体','展开','踏板细节','收纳']
+      },
+      {
+        id:'i2', name:'平板手推车', emoji:'🛒', cat:'move', grad:'blue',
+        desc:'载重约150kg，适合搬箱、搬家电、搬快递。轮子带刹车，请勿载人。',
+        loc:'工具间 A-02', status:'borrowed', condition:'良好',
+        tags:['搬运','可折叠'], rating:4.7, borrowCount:52,
+        gallery:['整体','折叠','轮组']
+      },
+      {
+        id:'i3', name:'冲击电钻', emoji:'🛠️', cat:'power', grad:'yellow',
+        desc:'家用冲击电钻，含常用钻头一盒。使用前请检查钻头是否夹紧，禁止未成年人操作。',
+        loc:'工具间 B-01', status:'available', condition:'良好',
+        tags:['用电','注意安全'], rating:4.6, borrowCount:28,
+        gallery:['主机','钻头盒','附件']
+      },
+      {
+        id:'i4', name:'羊角锤 + 螺丝刀套装', emoji:'🔨', cat:'hand', grad:'red',
+        desc:'羊角锤一把，十字/一字螺丝刀共12支，装于便携工具袋。',
+        loc:'工具间 B-02', status:'available', condition:'良好',
+        tags:['常用'], rating:4.9, borrowCount:61,
+        gallery:['工具袋','锤子','螺丝刀']
+      },
+      {
+        id:'i5', name:'园艺修枝剪', emoji:'✂️', cat:'garden', grad:'green',
+        desc:'修剪树枝花草，刃口锋利。使用后请清理汁液并归位。',
+        loc:'工具间 C-01', status:'available', condition:'良好',
+        tags:['园艺'], rating:4.5, borrowCount:19,
+        gallery:['整体','刃口']
+      },
+      {
+        id:'i6', name:'吸尘器（干湿两用）', emoji:'🧹', cat:'clean', grad:'purple',
+        desc:'桶式吸尘器，可吸尘吸水。滤芯耗材请轻拿轻放，严禁吸尖锐金属。',
+        loc:'工具间 C-02', status:'available', condition:'良好',
+        tags:['清洁','用电'], rating:4.4, borrowCount:31,
+        gallery:['主机','吸头','软管']
+      },
+      {
+        id:'i7', name:'折叠桌 120cm', emoji:'🪑', cat:'life', grad:'teal',
+        desc:'社区活动常用折叠桌，展开120×60cm。请勿站立桌面或放置过热物品。',
+        loc:'工具间 D-01', status:'available', condition:'良好',
+        tags:['活动'], rating:4.7, borrowCount:44,
+        gallery:['展开','折叠','桌腿']
+      },
+      {
+        id:'i8', name:'自行车打气筒', emoji:'🚲', cat:'life', grad:'blue',
+        desc:'带压力表打气筒，美嘴/法嘴通用。',
+        loc:'工具间 D-02', status:'borrowed', condition:'良好',
+        tags:['高频'], rating:4.8, borrowCount:73,
+        gallery:['整体','气嘴']
+      },
+      {
+        id:'i9', name:'应急药箱', emoji:'🧰', cat:'care', grad:'red',
+        desc:'含创可贴、碘伏、纱布、剪刀等基础应急用品。消耗后请告知管理员补货。',
+        loc:'工具间 E-01', status:'available', condition:'待补货',
+        tags:['应急'], rating:5.0, borrowCount:15,
+        gallery:['箱体','内部分区']
+      },
+      {
+        id:'i10', name:'户外电源 500Wh', emoji:'🔋', cat:'care', grad:'yellow',
+        desc:'停电应急、露营用电。请按时归还并保持电量不低于30%。',
+        loc:'工具间 E-02', status:'borrowed', condition:'良好',
+        tags:['应急','贵重'], rating:4.9, borrowCount:22,
+        gallery:['主机','接口','收纳包']
+      },
+      {
+        id:'i11', name:'手推车（爬楼款）', emoji:'📦', cat:'move', grad:'orange',
+        desc:'六轮爬楼车，适合搬米面油、桶装水、小家电。',
+        loc:'工具间 A-03', status:'available', condition:'良好',
+        tags:['爬楼'], rating:4.6, borrowCount:27,
+        gallery:['整体','轮组']
+      },
+      {
+        id:'i12', name:'鼓风机', emoji:'🍂', cat:'garden', grad:'green',
+        desc:'吹落叶、清理车道。使用时请注意周围行人。',
+        loc:'工具间 C-03', status:'maintenance', condition:'维修中',
+        tags:['园艺'], rating:4.3, borrowCount:12,
+        gallery:['整体']
+      }
+    ],
+    records:[
+      {
+        id:'r1', userId:'u1', userName:'林小雨', userAddr:'3号楼 2单元 1802', itemId:'i2', itemName:'平板手推车',
+        itemEmoji:'🛒', grad:'blue',
+        borrowAt:'3天前 14:20', dueAt:'2天后 14:20', returnAt:'',
+        status:'borrowed', note:'搬家纸箱', days:7
+      },
+      {
+        id:'r2', userId:'u1', userName:'林小雨', userAddr:'3号楼 2单元 1802', itemId:'i3', itemName:'冲击电钻',
+        itemEmoji:'🛠️', grad:'yellow',
+        borrowAt:'25天前 10:00', dueAt:'18天前 10:00', returnAt:'19天前 16:30',
+        status:'returned', note:'装置物架', days:7
+      },
+      {
+        id:'r3', userId:'u2', userName:'张叔', userAddr:'5号楼 1单元 0901', itemId:'i10', itemName:'户外电源 500Wh',
+        itemEmoji:'🔋', grad:'yellow',
+        borrowAt:'6天前 09:10', dueAt:'1天前 09:10', returnAt:'',
+        status:'overdue', note:'家庭应急', days:7
+      },
+      {
+        id:'r4', userId:'u3', userName:'王阿姨', userAddr:'2号楼 3单元 1206', itemId:'i1', itemName:'人字梯（3米）',
+        itemEmoji:'🪜', grad:'orange',
+        borrowAt:'昨天 16:00', dueAt:'6天后 16:00', returnAt:'',
+        status:'borrowed', note:'换灯泡', days:7
+      },
+      {
+        id:'r5', userId:'u1', userName:'林小雨', userAddr:'3号楼 2单元 1802', itemId:'i8', itemName:'自行车打气筒',
+        itemEmoji:'🚲', grad:'blue',
+        borrowAt:'1小时前', dueAt:'6天后', returnAt:'',
+        status:'borrowed', note:'电动车打气', days:7
+      }
+    ],
+    reserves:[
+      {
+        id:'q1', userId:'u1', userName:'林小雨', userAddr:'3号楼 2单元 1802', itemId:'i3', itemName:'冲击电钻',
+        itemEmoji:'🛠️', grad:'yellow', createdAt:'昨天', queue:1, status:'ready',
+        readyAt: Date.now() - 3600000, expiresAt: Date.now() + 11 * 3600000
+      },
+      {
+        id:'q2', userId:'u4', userName:'李哥', userAddr:'3号楼 1单元 0503', itemId:'i1', itemName:'人字梯（3米）',
+        itemEmoji:'🪜', grad:'orange', createdAt:'昨天', queue:1, status:'waiting'
+      }
+    ],
+    messages:[
+      {
+        id:'m1', type:'due', title:'归还提醒', body:'你借的「平板手推车」还有 2 天到期，请及时归还。',
+        time:'今天 08:30', read:false
+      },
+      {
+        id:'m2', type:'reserve', title:'预约到货 · 请尽快确认', body:'你预约的「冲击电钻」已可借用，请在 12 小时内确认，逾期将自动取消。',
+        time:'1小时前', read:false
+      },
+      {
+        id:'m3', type:'system', title:'工具间开放通知', body:'本周六 09:00-12:00 工具间照常开放，欢迎邻里借用。',
+        time:'昨天 18:40', read:true
+      },
+      {
+        id:'m4', type:'credit', title:'信用分变动', body:'按时归还「冲击电钻」，信用分 +2。',
+        time:'19天前', read:true
+      }
+    ],
+    damages:[
+      {
+        id:'d1', itemId:'i12', itemName:'鼓风机', itemEmoji:'🍂',
+        reporter:'张叔', desc:'无法启动，电源线疑似断了', status:'维修中', time:'2天前'
+      },
+      {
+        id:'d2', itemId:'i9', itemName:'应急药箱', itemEmoji:'🧰',
+        reporter:'林小雨', desc:'碘伏用完了，需要补货', status:'待处理', time:'今天 09:05'
+      }
+    ],
+    feedbacks:[
+      {
+        id:'f1', userId:'u3', userName:'王阿姨', userAddr:'2号楼 3单元 1206',
+        type:'bug', title:'首页搜索有时搜不到「梯子」',
+        content:'搜「梯子」没结果，但搜「人字梯」能找到。希望别名也能搜到。',
+        status:'open', time:'昨天 20:10', reply:''
+      },
+      {
+        id:'f2', userId:'u4', userName:'李哥', userAddr:'3号楼 1单元 0503',
+        type:'feature', title:'希望预约到货能微信提醒',
+        content:'光站内消息容易忘，最好能推送一下。',
+        status:'doing', time:'2天前', reply:'已记录，后续接订阅消息。'
+      },
+      {
+        id:'f3', userId:'u1', userName:'林小雨', userAddr:'3号楼 2单元 1802',
+        type:'feature', title:'建议增加「最长借用天数」显示',
+        content:'规则现在能改，但居民端看不太出来。',
+        status:'done', time:'上周', reply:'已优化：规则对居民隐藏细节，管理员可见。'
+      }
+    ],
+    creditLog:[
+      {id:'c1', title:'按时归还冲击电钻', delta:2, time:'19天前'},
+      {id:'c2', title:'完成借用+归还打气筒', delta:2, time:'上月'},
+      {id:'c3', title:'逾期2天（平板手推车）', delta:-5, time:'上上月'},
+      {id:'c4', title:'初始信用分', delta:100, time:'开户'}
+    ]
+  };
+}
+
+let state = loadState();
+let ui = {
+  page:'login',
+  stack:[],
+  tab:'home',
+  myTab:'active',
+  deskTab:'borrowed',
+  cat:'all',
+  search:'',
+  onlyAvailable:false,
+  adminFilter:'all',
+  detailId:null,
+  borrowId:null,
+  borrowDays:7,
+  borrowAgree:false,
+  borrowNote:'',
+  returnId:null,
+  returnOk:true,
+  returnNote:'',
+  editItem:null,
+  galleryIndex:0,
+  feedbackTab:'open',
+  feedbackType:'bug',
+  feedbackTitle:'',
+  feedbackContent:''
+};
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem('share_tools_state_v2');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(!parsed.people || !parsed.user || parsed.user.room === undefined || !parsed.feedbacks || !parsed.settings || parsed.settings.reserveConfirmHours === undefined || !parsed.categories){
+        return defaultData();
+      }
+      return parsed;
+    }
+  }catch(e){}
+  return defaultData();
+}
+function saveState(){
+  localStorage.setItem('share_tools_state_v2', JSON.stringify(state));
+}
+function resetDemo(){
+  state = defaultData();
+  saveState();
+  toast('演示数据已重置');
+  renderAll();
+}
+
+/* =========================
+   Router / Nav
+   ========================= */
+const TAB_PAGES = {home:'page-home', my:'page-my', msg:'page-msg', me:'page-me', admin:'page-admin'};
+const PAGE_MAP = {
+  login:'page-login', home:'page-home', detail:'page-detail', borrow:'page-borrow',
+  reserve:'page-reserve', my:'page-my', return:'page-return', msg:'page-msg',
+  me:'page-me', credit:'page-credit', admin:'page-admin', 'admin-items':'page-admin-items',
+  'admin-edit':'page-admin-edit', 'admin-desk':'page-admin-desk', 'admin-damage':'page-admin-damage',
+  'admin-rules':'page-admin-rules', feedback:'page-feedback', 'admin-feedback':'page-admin-feedback'
+};
+
+function showPage(page, push=true){
+  if(push && ui.page && ui.page !== page) ui.stack.push(ui.page);
+  ui.page = page;
+  Object.values(PAGE_MAP).forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.add('hide');
+  });
+  const el = document.getElementById(PAGE_MAP[page]);
+  if(el) el.classList.remove('hide');
+
+  const tabbar = document.getElementById('tabbar');
+  const isRootTab = ['home','my','msg','me','admin'].includes(page);
+  tabbar.classList.toggle('hide', !isRootTab);
+  if(isRootTab){
+    document.querySelectorAll('#tabbar button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.tab === page || (page==='admin' && b.dataset.tab==='me'));
+    });
+  }
+  window.scrollTo(0,0);
+}
+function goBack(){
+  const prev = ui.stack.pop();
+  if(prev) showPage(prev, false);
+  else showPage(state.user.isAdmin ? 'admin' : 'home', false);
+}
+function switchTab(tab){
+  ui.stack = [];
+  if(tab === 'me' && state.user.isAdmin){
+    // keep me accessible; admin entry from me
+    showPage('me', false);
+    return;
+  }
+  showPage(tab, false);
+}
+function login(role){
+  state.user.role = role;
+  state.user.isAdmin = role === 'admin';
+  saveState();
+  ui.stack = [];
+  showPage(role === 'admin' ? 'admin' : 'home', false);
+  renderAll();
+  toast(role === 'admin' ? '管理员登录成功' : '欢迎回来，林小雨');
+}
+
+/* =========================
+   Helpers
+   ========================= */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hide');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>t.classList.add('hide'), 1800);
+}
+function statusTag(status){
+  const map = {
+    available:['ok','可借'],
+    borrowed:['busy','借出中'],
+    maintenance:['bad','维修中'],
+    offline:['gray','已下架'],
+    pending:['info','处理中'],
+    returned:['ok','已归还'],
+    overdue:['bad','逾期中'],
+    reserved:['purple','已预约']
+  };
+  const [cls, text] = map[status] || ['gray', status];
+  return `<span class="tag ${cls}">${text}</span>`;
+}
+function unreadCount(){
+  return state.messages.filter(m=>!m.read).length;
+}
+function itemById(id){ return state.items.find(i=>i.id===id); }
+function categoryList(){
+  return [{id:'all', name:'全部'}].concat(state.categories || []);
+}
+function catName(id){
+  return (state.categories || []).find(c=>c.id===id)?.name || '未分类';
+}
+function itemImages(item){
+  return (item && item.images && item.images.length) ? item.images : [];
+}
+function itemThumbInner(item, emojiSize){
+  const img = itemImages(item)[0];
+  const size = emojiSize || 42;
+  if(img){
+    return `<img src="${img}" alt="${item.name||''}" style="width:100%;height:100%;object-fit:cover;display:block" />`;
+  }
+  return `<div class="emoji" style="font-size:${size}px">${item.emoji||'📦'}</div>`;
+}
+function formatAddr(p){
+  if(!p) return '';
+  if(p.userAddr) return p.userAddr;
+  return [p.building, p.unit, p.room].filter(Boolean).join(' ');
+}
+function personById(id){
+  if(state.user && state.user.id === id) return state.user;
+  return (state.people || []).find(p => p.id === id) || null;
+}
+function personAddr(userId, fallback){
+  const p = personById(userId);
+  if(p) return formatAddr(p);
+  return (fallback && fallback.userAddr) || '';
+}
+function currentHolder(itemId){
+  return state.records.find(r => r.itemId === itemId && !r.returnAt && ['borrowed','overdue'].includes(r.status))
+    || state.records.find(r => r.itemId === itemId && !r.returnAt && r.status === 'pending');
+}
+function waitingQueue(itemId){
+  return state.reserves
+    .filter(r => r.itemId === itemId && (r.status === 'waiting' || r.status === 'ready'))
+    .sort((a,b)=> (a.queue||0) - (b.queue||0));
+}
+function reserveConfirmHours(){
+  const h = Number(state.settings.reserveConfirmHours);
+  return h > 0 ? h : 12;
+}
+function markReserveReady(res, notify=true){
+  const hours = reserveConfirmHours();
+  const now = Date.now();
+  res.status = 'ready';
+  res.readyAt = now;
+  res.expiresAt = now + hours * 3600 * 1000;
+  if(notify && res.userId === state.user.id){
+    state.messages.unshift({
+      id:'m'+Date.now(), type:'reserve', title:'预约到货 · 请尽快确认',
+      body:`你预约的「${res.itemName}」已可借用，请在 ${hours} 小时内确认，逾期将自动取消。`,
+      time:'刚刚', read:false
+    });
+  }
+  return res;
+}
+function formatRemain(ms){
+  if(ms <= 0) return '已超时';
+  const mins = Math.floor(ms / 60000);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if(h >= 24){
+    const d = Math.floor(h / 24);
+    return `${d}天 ${h%24}小时`;
+  }
+  if(h > 0) return `${h}小时 ${m}分`;
+  return `${m}分钟`;
+}
+function reserveConfirmText(res){
+  if(res.status !== 'ready' || !res.expiresAt) return '';
+  const left = res.expiresAt - Date.now();
+  return left > 0 ? `请在 ${formatRemain(left)} 内确认借用` : '确认时限已过，将自动取消';
+}
+function processReserveTimeouts(){
+  const now = Date.now();
+  let changed = false;
+  (state.reserves || []).slice().forEach(r=>{
+    if(r.status === 'ready' && r.expiresAt && now > r.expiresAt){
+      r.status = 'expired';
+      changed = true;
+      if(r.userId === state.user.id){
+        state.messages.unshift({
+          id:'m'+Date.now()+Math.random(), type:'reserve', title:'预约已自动取消',
+          body:`「${r.itemName}」预约超过 ${reserveConfirmHours()} 小时未确认，已自动取消。需要可重新排队。`,
+          time:'刚刚', read:false
+        });
+      }
+      const item = itemById(r.itemId);
+      if(item && item.status === 'available'){
+        const next = state.reserves
+          .filter(x=>x.itemId===r.itemId && x.status==='waiting')
+          .sort((a,b)=>(a.queue||0)-(b.queue||0))[0];
+        if(next) markReserveReady(next);
+      }
+    }
+  });
+  if(changed) saveState();
+  return changed;
+}
+function canUserBorrow(item, userId){
+  if(!item || item.status !== 'available'){
+    return {ok:false, reason:'not_available'};
+  }
+  const q = waitingQueue(item.id);
+  if(!q.length) return {ok:true, queue:0};
+  const head = q[0];
+  if(head.userId === userId) return {ok:true, queue:q.length, fromQueue:true};
+  return {ok:false, reason:'queue', queue:q.length, headName:head.userName};
+}
+function holderLine(rec){
+  if(!rec) return '';
+  const over = rec.status === 'overdue';
+  const addr = rec.userAddr || personAddr(rec.userId, rec);
+  const who = addr ? `${rec.userName}（${addr}）` : rec.userName;
+  return `👤 ${who} · ${over ? '已逾期，应还 ' : '预计 '}${rec.dueAt} 归还`;
+}
+function gradStyle(grad){ return GRADIENTS[grad] || GRADIENTS.slate; }
+function creditLevel(score){
+  if(score >= 95) return {label:'优秀', color:'var(--primary)'};
+  if(score >= 80) return {label:'良好', color:'var(--info)'};
+  if(score >= 60) return {label:'一般', color:'var(--warn)'};
+  return {label:'受限', color:'var(--danger)'};
+}
+function msgIcon(type){
+  return {due:'⏰', reserve:'📅', system:'📢', credit:'⭐', damage:'🛠️', borrow:'📦'}[type] || '🔔';
+}
+function msgIconBg(type){
+  return {
+    due:'var(--warn-soft)', reserve:'var(--purple-soft)', system:'var(--info-soft)',
+    credit:'var(--gold-soft)', damage:'var(--danger-soft)', borrow:'var(--primary-soft)'
+  }[type] || 'var(--info-soft)';
+}
+
+function closeOverlay(){
+  document.getElementById('overlay').innerHTML = '';
+}
+function openOverlay(html, center=false){
+  const overlay = document.getElementById('overlay');
+  overlay.innerHTML = `<div class="mask ${center?'center':''}" onclick="if(event.target===this)closeOverlay()">${html}</div>`;
+}
+
+/* =========================
+   Render: Home
+   ========================= */
+function renderHome(){
+  const chips = document.getElementById('cat-chips');
+  chips.innerHTML = categoryList().map(c=>
+    `<button class="chip ${ui.cat===c.id?'active':''}" onclick="setCat('${c.id}')">${c.name}</button>`
+  ).join('') + `<button class="chip ${ui.onlyAvailable?'active':''}" onclick="toggleOnlyAvail()">✓ 可借</button>`;
+
+  let items = state.items.slice();
+  if(ui.cat !== 'all') items = items.filter(i=>i.cat===ui.cat);
+  if(ui.onlyAvailable) items = items.filter(i=>i.status==='available');
+  if(ui.search.trim()){
+    const q = ui.search.trim().toLowerCase();
+    items = items.filter(i=> (i.name+i.desc+i.loc).toLowerCase().includes(q));
+  }
+
+  document.getElementById('home-list-title').textContent =
+    ui.search ? `搜索结果（${items.length}）` : (ui.cat==='all' ? `全部物资（${items.length}）` : `${catName(ui.cat)}（${items.length}）`);
+
+  const list = document.getElementById('home-list');
+  if(!items.length){
+    list.innerHTML = `<div class="empty"><div class="emoji">🔍</div><p>没有找到相关物资</p><button class="mini-btn" onclick="resetFilters()">清除筛选</button></div>`;
+    return;
+  }
+  list.innerHTML = items.map(renderItemCard).join('');
+}
+function itemAction(i){
+  const allow = canUserBorrow(i, state.user.id);
+  if(i.status==='available'){
+    if(allow.ok) return {label: allow.fromQueue ? '优先借用' : '借用', cls:'', fn:`openBorrow('${i.id}')`};
+    return {label:'排队', cls:'ghost', fn:`openReserve('${i.id}')`};
+  }
+  if(i.status==='borrowed') return {label:'预约', cls:'ghost', fn:`openReserve('${i.id}')`};
+  return {label:'查看', cls:'ghost', fn:`openDetail('${i.id}')`};
+}
+function renderItemCard(i){
+  const act = itemAction(i);
+  const holder = currentHolder(i.id);
+  const holderText = (i.status === 'borrowed' || i.status === 'overdue') && holder
+    ? holderLine(holder)
+    : (holder && i.status !== 'available' ? holderLine(holder) : '');
+  return `
+    <article class="item-card" onclick="openDetail('${i.id}')">
+      <div class="item-thumb" style="background:${gradStyle(i.grad)}">
+        ${itemThumbInner(i)}
+        <div class="loc">${i.loc.split(' ').slice(-1)[0]}</div>
+      </div>
+      <div class="item-body">
+        <div>
+          <h3>${i.name}</h3>
+          <div class="item-meta">${holderText || i.desc}</div>
+          ${holderText ? `<div class="item-meta" style="margin-top:2px">${i.desc}</div>` : ''}
+        </div>
+        <div class="item-foot">
+          ${statusTag(i.status)}
+          <button class="mini-btn ${act.cls}" onclick="event.stopPropagation();${act.fn}">${act.label}</button>
+        </div>
+      </div>
+    </article>`;
+}
+function setCat(id){ ui.cat = id; renderHome(); }
+function toggleOnlyAvail(){ ui.onlyAvailable = !ui.onlyAvailable; renderHome(); }
+function onSearch(v){ ui.search = v; renderHome(); }
+function resetFilters(){
+  ui.cat='all'; ui.search=''; ui.onlyAvailable=false;
+  const input = document.getElementById('search-input');
+  if(input) input.value='';
+  renderHome();
+}
+function openReserveFromCard(){ toast('请进入详情页预约'); }
+
+/* =========================
+   Render: Detail
+   ========================= */
+function openDetail(id){
+  ui.detailId = id;
+  ui.galleryIndex = 0;
+  renderDetail();
+  showPage('detail');
+}
+function renderDetail(){
+  const i = itemById(ui.detailId);
+  if(!i) return;
+  const imgs = itemImages(i);
+  const labels = imgs.length
+    ? imgs.map((_,idx)=>`图 ${idx+1}`)
+    : (i.gallery && i.gallery.length ? i.gallery : [i.name]);
+  const g = labels;
+  const holder = currentHolder(i.id);
+  const slides = g.map((label,idx)=>`
+    <div class="slide" style="display:${idx===ui.galleryIndex?'flex':'none'}; background:${gradStyle(i.grad)}">
+      ${imgs[idx]
+        ? `<img src="${imgs[idx]}" alt="${label}" style="width:100%;height:100%;object-fit:cover;display:block" />`
+        : `<div class="emoji">${i.emoji}</div>`}
+    </div>`).join('');
+
+  const holderCard = holder ? (()=>{
+    const addr = holder.userAddr || personAddr(holder.userId, holder);
+    return `
+    <div class="row-card" style="margin:0 16px 12px; border:1px solid ${holder.status==='overdue'?'rgba(250,81,81,.25)':'rgba(7,193,96,.25)'}">
+      <div class="icon" style="background:${holder.status==='overdue'?'var(--danger-soft)':'var(--primary-soft)'}">👤</div>
+      <div class="main">
+        <h4>当前借用人：${holder.userName}</h4>
+        <p>住址：${addr || '未填写'}</p>
+        <p>预计归还：${holder.dueAt}${holder.status==='overdue'?'（已逾期）':''}</p>
+        <p>借出于 ${holder.borrowAt}${holder.note && holder.note!=='—' ? ' · '+holder.note : ''}</p>
+      </div>
+      <div class="side">
+        <span class="tag ${holder.status==='overdue'?'bad':'busy'}">${holder.status==='overdue'?'逾期中':'借出中'}</span>
+        ${state.user.isAdmin ? `<button class="mini-btn" onclick="openAdminReturn('${holder.id}')">核销</button>` : ''}
+      </div>
+    </div>`;
+  })() : '';
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="gallery">
+      ${slides}
+      <div class="cat">${catName(i.cat)}</div>
+      <div class="dots">${g.map((_,idx)=>`<span class="${idx===ui.galleryIndex?'on':''}"></span>`).join('')}</div>
+    </div>
+    <div class="detail-title">
+      <h2>${i.name}</h2>
+      <div class="tags">
+        ${statusTag(i.status)}
+        <span class="tag gold">⭐ ${i.rating}</span>
+        <span class="tag gray">已借出 ${i.borrowCount} 次</span>
+      </div>
+    </div>
+    ${holderCard}
+    <div class="kv">
+      <div class="row"><div class="k">简介</div><div class="v">${i.desc}</div></div>
+      <div class="row"><div class="k">存放位置</div><div class="v">${i.loc}</div></div>
+      <div class="row"><div class="k">物品状态</div><div class="v">${i.condition}</div></div>
+      ${state.user.isAdmin ? `<div class="row"><div class="k">建议时长</div><div class="v">${state.settings.maxDays? state.settings.maxDays+' 天内':'默认 '+state.settings.defaultDays+' 天，可调整规则'}</div></div>` : ''}
+      ${holder ? `<div class="row"><div class="k">借用人</div><div class="v"><b>${holder.userName}</b> · ${holder.userAddr || personAddr(holder.userId, holder) || '未填写住址'} · 预计 ${holder.dueAt} 归还</div></div>` : ''}
+    </div>
+    <div class="note-card">
+      借用须知：请爱护物资、按时归还；损坏请如实登记。逾期会影响信用分。社区邻里之间，请互相体谅。
+    </div>
+    <div class="section-title"><h2>预约排队</h2></div>
+    <div class="list">
+      ${renderReserveSummary(i.id)}
+    </div>
+    <div class="section-title"><h2>图集</h2></div>
+    <div class="chip-row">
+      ${g.map((label,idx)=>`<button class="chip ${idx===ui.galleryIndex?'active':''}" onclick="setGallery(${idx})">${label}</button>`).join('')}
+    </div>
+    <div class="item-list">
+      ${g.map((label,idx)=>`
+        <div class="item-card" onclick="setGallery(${idx})">
+          <div class="item-thumb" style="background:${gradStyle(i.grad)};width:88px;height:88px;flex-basis:88px">
+            ${imgs[idx]
+              ? `<img src="${imgs[idx]}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:14px" />`
+              : `<div class="emoji" style="font-size:34px">${i.emoji}</div>`}
+          </div>
+          <div class="item-body">
+            <h3>${label}</h3>
+            <div class="item-meta">${i.name} · 展示图 ${idx+1}/${g.length}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  `;
+
+  const actions = document.getElementById('detail-actions');
+  const allow = canUserBorrow(i, state.user.id);
+  const queueList = waitingQueue(i.id);
+  const myInQueue = queueList.find(r=>r.userId===state.user.id);
+  if(i.status === 'available'){
+    if(allow.ok){
+      actions.innerHTML = `
+        <div class="row2">
+          <button class="btn-primary outline" onclick="openReserve('${i.id}')">预约</button>
+          <button class="btn-primary" onclick="openBorrow('${i.id}')">${allow.fromQueue?'优先借用':'立即借用'}</button>
+        </div>`;
+    }else{
+      actions.innerHTML = `
+        <div class="row2">
+          <button class="btn-primary gray" disabled>队首优先中</button>
+          <button class="btn-primary" onclick="openReserve('${i.id}')">${myInQueue?'已在队列':'加入排队'}</button>
+        </div>`;
+    }
+  }else if(i.status === 'borrowed'){
+    const isMine = holder && holder.userId === state.user.id;
+    actions.innerHTML = `
+      <div class="row2">
+        <button class="btn-primary outline" onclick="openScan()">${isMine?'扫码归还':'扫码'}</button>
+        <button class="btn-primary" onclick="openReserve('${i.id}')">${myInQueue?'已在预约队列':isMine?'查看预约':'加入预约'}</button>
+      </div>`;
+  }else{
+    actions.innerHTML = `<button class="btn-primary gray" disabled>暂不可借</button>`;
+  }
+}
+function renderReserveSummary(itemId){
+  const qs = waitingQueue(itemId);
+  if(!qs.length){
+    return `<div class="empty" style="margin:8px 0"><div class="emoji">✅</div><p>当前没有人排队</p></div>`;
+  }
+  return qs.map(r=>`
+    <div class="row-card">
+      <div class="icon" style="background:var(--purple-soft)">👤</div>
+      <div class="main">
+        <h4>${r.userName}${r.status==='ready'?' · 待确认':''}</h4>
+        <p>${r.userAddr || personAddr(r.userId, r) || '未填写住址'}</p>
+        <p>预约时间 ${r.createdAt} · 队列第 ${r.queue} 位</p>
+        ${r.status==='ready' ? `<p style="color:var(--primary);font-weight:600">${reserveConfirmText(r)}</p>` : ''}
+      </div>
+      <div class="side">
+        <span class="tag ${r.status==='ready'?'ok':'purple'}">${r.status==='ready'?'待确认取用':'排队中'}</span>
+        ${r.status==='ready' && r.userId===state.user.id ? `<button class="mini-btn" onclick="confirmReadyReserve('${r.id}')">确认借用</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+function setGallery(idx){
+  ui.galleryIndex = idx;
+  renderDetail();
+}
+
+/* =========================
+   Borrow / Reserve / Return
+   ========================= */
+function openBorrow(id){
+  const i = itemById(id);
+  const allow = canUserBorrow(i, state.user.id);
+  if(!allow.ok){
+    if(allow.reason === 'queue'){
+      openReserve(id);
+      toast(`已有 ${allow.queue} 人预约排队，请先排队`);
+      return;
+    }
+    toast('该物资当前不可借');
+    return;
+  }
+  ui.borrowId = id;
+  ui.borrowDays = state.settings.defaultDays || 7;
+  ui.borrowAgree = false;
+  ui.borrowNote = '';
+  renderBorrow();
+  showPage('borrow');
+}
+function renderBorrow(){
+  const i = itemById(ui.borrowId);
+  if(!i) return;
+  const dayOpts = [1,3,7,14,30];
+  if(!dayOpts.includes(ui.borrowDays) && ui.borrowDays !== 0) dayOpts.push(ui.borrowDays);
+  document.getElementById('borrow-content').innerHTML = `
+    <div class="list">
+      <div class="row-card">
+        <div class="icon" style="background:${gradStyle(i.grad)}">${i.emoji}</div>
+        <div class="main">
+          <h4>${i.name}</h4>
+          <p>${i.loc} · ${i.condition}</p>
+        </div>
+        <div class="side">${statusTag('available')}</div>
+      </div>
+    </div>
+    <div class="form">
+      <div class="field">
+        <label>借用时长</label>
+        <div class="opt-row">
+          ${dayOpts.map(d=>`<button class="opt ${ui.borrowDays===d?'active':''}" onclick="setBorrowDays(${d})">${d} 天</button>`).join('')}
+          <button class="opt ${ui.borrowDays===0?'active':''}" onclick="setBorrowDays(0)">不限（约定归还）</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>用途备注（选填）</label>
+        <input value="${ui.borrowNote}" oninput="ui.borrowNote=this.value" placeholder="例如：搬家纸箱 / 装置物架" />
+      </div>
+      <div class="field">
+        <label>应还时间</label>
+        <div style="font-size:15px;font-weight:700">${ui.borrowDays? '借出日起 '+ui.borrowDays+' 天内归还' : '与管理员/邻里约定归还时间'}</div>
+      </div>
+      <div class="check-row" onclick="toggleAgree()">
+        <div class="check-box ${ui.borrowAgree?'on':''}">✓</div>
+        <div>我已阅读并同意：爱护物资、按时归还；损坏或遗失照价处理；逾期将扣减信用分。</div>
+      </div>
+      <p style="text-align:center;color:var(--sub);font-size:12px;margin:0;">提交后自动借出，无需管理员确认；记录可在「我的借用」查看</p>
+    </div>
+  `;
+  const submitBtn = document.getElementById('borrow-submit');
+  if(submitBtn) submitBtn.disabled = !ui.borrowAgree;
+}
+function setBorrowDays(d){ ui.borrowDays = d; renderBorrow(); }
+function toggleAgree(){ ui.borrowAgree = !ui.borrowAgree; renderBorrow(); }
+function submitBorrow(){
+  if(!ui.borrowAgree) return;
+  const i = itemById(ui.borrowId);
+  const allow = canUserBorrow(i, state.user.id);
+  if(!allow.ok){ toast('物资状态已变化，无法借用'); return; }
+  const rec = {
+    id:'r'+Date.now(),
+    userId:state.user.id, userName:state.user.name, userAddr:formatAddr(state.user),
+    itemId:i.id, itemName:i.name, itemEmoji:i.emoji, grad:i.grad,
+    borrowAt:'刚刚', dueAt: ui.borrowDays ? ui.borrowDays+'天后' : '待约定',
+    returnAt:'', status:'borrowed', note:ui.borrowNote || '—', days:ui.borrowDays
+  };
+  state.records.unshift(rec);
+  i.status = 'borrowed';
+  i.borrowCount += 1;
+  // 队首借用成功后，清掉自己的预约
+  state.reserves = state.reserves.map(r =>
+    (r.itemId === i.id && r.userId === state.user.id && ['waiting','ready'].includes(r.status))
+      ? {...r, status:'done'}
+      : r
+  );
+  // 其余人重新编号
+  const stillWaiting = state.reserves.filter(r => r.itemId === i.id && r.status === 'waiting');
+  stillWaiting.forEach((r, idx) => { r.queue = idx + 1; });
+
+  state.messages.unshift({
+    id:'m'+Date.now(), type:'borrow', title:'借用成功',
+    body:`「${i.name}」已借出，请按约定归还。${ui.borrowDays?'到期前会提醒你。':''}`,
+    time:'刚刚', read:false
+  });
+  saveState();
+  renderAll();
+  showPage('my');
+  ui.stack = [];
+  ui.myTab = 'active';
+  setMyTab('active');
+  toast(allow.fromQueue ? '按预约队列优先借出' : '借用成功');
+}
+
+function openReserve(id){
+  const i = itemById(id);
+  if(!i) return;
+  const allow = canUserBorrow(i, state.user.id);
+  if(allow.ok && i.status === 'available'){
+    toast('当前在库可直接借用，无需预约');
+    openBorrow(id);
+    return;
+  }
+  if(!state.settings.allowReserve){ toast('预约功能已关闭'); return; }
+  // 已在队列中则不重复预约
+  const mine = waitingQueue(i.id).find(r=>r.userId===state.user.id);
+  if(mine){ toast('你已在预约队列中'); return; }
+  ui.borrowId = id;
+  renderReserve();
+  showPage('reserve');
+}
+function renderReserve(){
+  const i = itemById(ui.borrowId);
+  const qs = waitingQueue(i.id);
+  const holder = currentHolder(i.id);
+  const canNow = canUserBorrow(i, state.user.id);
+  document.getElementById('reserve-content').innerHTML = `
+    <div class="list">
+      <div class="row-card">
+        <div class="icon" style="background:${gradStyle(i.grad)}">${i.emoji}</div>
+        <div class="main">
+          <h4>${i.name}</h4>
+          <p>当前状态：${i.status==='borrowed'?'他人借出中':i.status==='available'?'已在库':'暂不可借'} · 已有 ${qs.length} 人排队</p>
+          ${holder ? `<p style="margin-top:4px;color:var(--primary);font-weight:600">${holderLine(holder)}</p>` : ''}
+          ${i.status==='available' && qs.length && !canNow.ok ? `<p style="margin-top:4px;color:var(--warn)">物资已回库，但队首优先办理中</p>` : ''}
+        </div>
+        <div class="side">${statusTag(i.status)}</div>
+      </div>
+    </div>
+    <div class="form">
+      <div class="field">
+        <label>预约规则</label>
+        <div style="font-size:14px;color:#555;line-height:1.7">
+          预约用于「借出中」的物资排队。物资归还后按队列顺序通知；队首可优先借用。若物资已在库且无人排队，直接借用即可，无需预约。
+        </div>
+      </div>
+      <div class="field">
+        <label>你的排队位置</label>
+        <div style="font-size:28px;font-weight:800;color:var(--purple)">第 ${qs.length+1} 位</div>
+      </div>
+      ${holder ? `
+      <div class="field">
+        <label>预计可借时间</label>
+        <div style="font-size:15px;font-weight:700">${holder.userName}（${holder.userAddr || personAddr(holder.userId, holder) || '未填写住址'}）预计 ${holder.dueAt} 归还，归还后通知你</div>
+      </div>` : `
+      <div class="field">
+        <label>预计可借时间</label>
+        <div style="font-size:15px;font-weight:700">当前已在库，排到你即可办理</div>
+      </div>`}
+      <div class="note-card" style="background:var(--purple-soft);color:#5b46c7">
+        预约不长期锁死物资：通知后请及时办理，逾期未取将让给下一位。
+      </div>
+    </div>
+  `;
+}
+function submitReserve(){
+  const i = itemById(ui.borrowId);
+  const qs = waitingQueue(i.id);
+  state.reserves.unshift({
+    id:'q'+Date.now(), userId:state.user.id, userName:state.user.name, userAddr:formatAddr(state.user),
+    itemId:i.id, itemName:i.name, itemEmoji:i.emoji, grad:i.grad,
+    createdAt:'刚刚', queue:qs.length+1, status:'waiting'
+  });
+  state.messages.unshift({
+    id:'m'+Date.now(), type:'reserve', title:'预约成功',
+    body:`你已加入「${i.name}」预约队列，当前第 ${qs.length+1} 位。`,
+    time:'刚刚', read:false
+  });
+  saveState();
+  renderAll();
+  showPage('my');
+  ui.myTab='reserves';
+  setMyTab('reserves');
+  toast('已加入预约队列');
+}
+
+function openReturn(id){
+  ui.returnId = id;
+  ui.returnOk = true;
+  ui.returnNote = '';
+  renderReturn();
+  showPage('return');
+}
+function renderReturn(){
+  const rec = state.records.find(r=>r.id===ui.returnId);
+  if(!rec) return;
+  document.getElementById('return-content').innerHTML = `
+    <div class="list">
+      <div class="row-card">
+        <div class="icon" style="background:${gradStyle(rec.grad)}">${rec.itemEmoji}</div>
+        <div class="main">
+          <h4>${rec.itemName}</h4>
+          <p>借出于 ${rec.borrowAt} · 应还 ${rec.dueAt}</p>
+        </div>
+        <div class="side">${statusTag(rec.status)}</div>
+      </div>
+    </div>
+    <div class="form">
+      <div class="field">
+        <label>物品是否完好？</label>
+        <div class="opt-row">
+          <button class="opt ${ui.returnOk?'active':''}" onclick="setReturnOk(true)">完好</button>
+          <button class="opt ${!ui.returnOk?'active':''}" onclick="setReturnOk(false)">有损坏/缺件</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>归还备注（选填）</label>
+        <textarea placeholder="例如：已清理，附件齐全" oninput="ui.returnNote=this.value">${ui.returnNote}</textarea>
+      </div>
+      <div class="note-card">
+        提交后自动完成归还入库。若标记损坏，会同步生成报修单，管理员可再核验。
+      </div>
+    </div>
+  `;
+}
+function setReturnOk(v){ ui.returnOk=v; renderReturn(); }
+function submitReturn(){
+  const rec = state.records.find(r=>r.id===ui.returnId);
+  if(!rec) return;
+  rec.status = 'returned';
+  rec.returnAt = '刚刚';
+  const item = itemById(rec.itemId);
+  if(item){
+    if(ui.returnOk){
+      item.status = 'available';
+    }else{
+      item.status = 'maintenance';
+      state.damages.unshift({
+        id:'d'+Date.now(), itemId:item.id, itemName:item.name, itemEmoji:item.emoji,
+        reporter:state.user.name, desc: ui.returnNote || '归还时反馈存在损坏/缺件',
+        status:'待处理', time:'刚刚'
+      });
+      state.creditLog.unshift({id:'c'+Date.now(), title:`归还反馈损坏：${item.name}`, delta:-10, time:'刚刚'});
+      state.user.credit = Math.max(0, state.user.credit - 10);
+    }
+    // on-time bonus if no overdue
+    if(ui.returnOk){
+      state.creditLog.unshift({id:'c'+Date.now(), title:`按时归还：${item.name}`, delta:2, time:'刚刚'});
+      state.user.credit = Math.min(120, state.user.credit + 2);
+    }
+  }
+  // release reservation notify
+  // 归还后通知队首
+  const waiting = state.reserves
+    .filter(r=>r.itemId===rec.itemId && r.status==='waiting')
+    .sort((a,b)=>(a.queue||0)-(b.queue||0))[0];
+  if(waiting){
+    markReserveReady(waiting);
+  }
+  state.messages.unshift({
+    id:'m'+Date.now(), type:'borrow', title:'归还成功',
+    body:`「${rec.itemName}」已提交归还。${ui.returnOk?'信用分 +2。':'已生成损坏报修单。'}`,
+    time:'刚刚', read:false
+  });
+  saveState();
+  renderAll();
+  showPage('my');
+  ui.myTab='history';
+  setMyTab('history');
+  toast('归还成功');
+}
+
+/* =========================
+   My borrows
+   ========================= */
+function setMyTab(tab){
+  ui.myTab = tab;
+  document.querySelectorAll('#my-seg button').forEach((b,idx)=>{
+    b.classList.toggle('active', ['active','history','reserves'][idx]===tab);
+  });
+  renderMy();
+}
+function renderMy(){
+  const list = document.getElementById('my-list');
+  if(ui.myTab === 'reserves'){
+    const reserves = state.reserves.filter(r=>r.userId===state.user.id);
+    if(!reserves.length){
+      list.innerHTML = emptyBox('📅','暂无预约记录','去首页看看有什么可借的','goHome()');
+      return;
+    }
+    list.innerHTML = reserves.map(r=>{
+      const left = r.status==='ready' && r.expiresAt ? (r.expiresAt - Date.now()) : 0;
+      return `
+      <div class="row-card">
+        <div class="icon" style="background:${gradStyle(r.grad)}">${r.itemEmoji}</div>
+        <div class="main">
+          <h4>${r.itemName}</h4>
+          <p>${r.createdAt} · ${r.status==='ready'?'可取用':r.status==='waiting'?'排队中':r.status==='expired'?'已超时取消':'已取消'} · 队列第 ${r.queue} 位</p>
+          ${r.status==='ready' ? `<p style="margin-top:4px;color:${left>0?'var(--primary)':'var(--danger)'};font-weight:600">${reserveConfirmText(r)}</p>` : ''}
+        </div>
+        <div class="side">
+          <span class="tag ${r.status==='ready'?(left>0?'ok':'bad'):r.status==='waiting'?'purple':'gray'}">${r.status==='ready'?(left>0?'待确认':'已超时'):r.status==='waiting'?'排队中':r.status==='expired'?'已取消':'已取消'}</span>
+          ${r.status==='waiting'?`<button class="mini-btn gray" onclick="cancelReserve('${r.id}')">取消</button>`:''}
+          ${r.status==='ready' && left>0?`<button class="mini-btn" onclick="confirmReadyReserve('${r.id}')">确认借用</button>`:''}
+          ${r.status==='ready' && left<=0?`<button class="mini-btn gray" onclick="cancelReserve('${r.id}')">关闭</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  let recs = state.records.filter(r=>r.userId===state.user.id);
+  if(ui.myTab === 'active') recs = recs.filter(r=>['borrowed','pending','overdue'].includes(r.status));
+  else recs = recs.filter(r=>['returned','cancelled'].includes(r.status));
+
+  if(!recs.length){
+    list.innerHTML = emptyBox('📦', ui.myTab==='active'?'当前没有借用中的物资':'还没有归还记录','', '');
+    return;
+  }
+  list.innerHTML = recs.map(r=>{
+    const st = r.status === 'overdue' ? overdueTag() : statusTag(r.status);
+    return `
+      <div class="row-card">
+        <div class="icon" style="background:${gradStyle(r.grad)}">${r.itemEmoji}</div>
+        <div class="main">
+          <h4>${r.itemName}</h4>
+          <p>借出于 ${r.borrowAt} · 应还 ${r.dueAt}${r.returnAt? ' · 已还 '+r.returnAt : ''}</p>
+          <p>备注：${r.note}</p>
+        </div>
+        <div class="side">
+          ${st}
+          ${['borrowed','overdue','pending'].includes(r.status)
+            ? `<button class="mini-btn" onclick="openReturn('${r.id}')">归还</button>`
+            : `<button class="mini-btn ghost" onclick="openDetail('${r.itemId}')">再看一眼</button>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+function overdueTag(){ return `<span class="tag bad">逾期中</span>`; }
+function emptyBox(emoji, text, sub, action){
+  return `<div class="empty"><div class="emoji">${emoji}</div><p>${text}${sub?`<br><span style="font-size:12px">${sub}</span>`:''}</p>${action?`<button class="mini-btn" onclick="${action}">去逛逛</button>`:''}</div>`;
+}
+function goHome(){ showPage('home'); ui.stack=[]; }
+function cancelReserve(id){
+  const r = state.reserves.find(x=>x.id===id);
+  if(r){ r.status='cancelled'; saveState(); renderMy(); toast('已取消预约'); }
+}
+function confirmReadyReserve(id){
+  const r = state.reserves.find(x=>x.id===id);
+  if(!r) return;
+  processReserveTimeouts();
+  const fresh = state.reserves.find(x=>x.id===id);
+  if(!fresh || fresh.status !== 'ready'){ toast('预约已失效'); renderMy(); return; }
+  if(fresh.expiresAt && Date.now() > fresh.expiresAt){ toast('已超过确认时限'); processReserveTimeouts(); renderAll(); return; }
+  const item = itemById(fresh.itemId);
+  const allow = canUserBorrow(item, state.user.id);
+  if(!allow.ok){
+    if(allow.reason === 'queue'){
+      toast('当前队首不是你，请等待');
+    }else{
+      toast('物资当前不可借');
+    }
+    return;
+  }
+  // 确认后进入借用填写
+  openBorrow(fresh.itemId);
+  toast('请完成借用登记');
+}
+
+/* =========================
+   Messages
+   ========================= */
+function renderMsg(){
+  const list = document.getElementById('msg-list');
+  const dot = document.getElementById('msg-dot');
+  const n = unreadCount();
+  if(n>0){ dot.classList.remove('hide'); dot.textContent = n>9?'9+':n; }
+  else dot.classList.add('hide');
+
+  if(!state.messages.length){
+    list.innerHTML = emptyBox('🔔','暂无消息','','');
+    return;
+  }
+  list.innerHTML = state.messages.map(m=>`
+    <div class="msg-item ${m.read?'':'unread'}" onclick="readMsg('${m.id}')">
+      <div class="icon" style="background:${msgIconBg(m.type)}">${msgIcon(m.type)}</div>
+      <div class="body">
+        <h4>${m.title}</h4>
+        <p>${m.body}</p>
+        <div class="time">${m.time}${m.read?'':' · 未读'}</div>
+      </div>
+    </div>`).join('');
+}
+function readMsg(id){
+  const m = state.messages.find(x=>x.id===id);
+  if(m){ m.read=true; saveState(); renderMsg(); }
+}
+function markAllRead(){
+  state.messages.forEach(m=>m.read=true);
+  saveState(); renderMsg(); toast('已全部标记已读');
+}
+
+/* =========================
+   Profile / Credit
+   ========================= */
+function renderMe(){
+  const u = state.user;
+  const level = creditLevel(u.credit);
+  const active = state.records.filter(r=>r.userId===u.id && ['borrowed','pending','overdue'].includes(r.status)).length;
+  const history = state.records.filter(r=>r.userId===u.id && r.status==='returned').length;
+
+  document.getElementById('me-content').innerHTML = `
+    <div class="hero" style="background:linear-gradient(135deg,#1f2937,#374151 50%,#4b5563)">
+      <div class="row">
+        <div>
+          <div class="label">邻里身份</div>
+          <div class="score" style="font-size:26px">${u.name} ${u.avatar}</div>
+          <div class="hint">${formatAddr(u)} · ${u.phone}</div>
+        </div>
+        <div class="pill">${u.isAdmin? '管理员 · '+u.adminLabel : '社区居民'}</div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn" onclick="showPage('credit')">信用分 ${u.credit}</button>
+        <button class="btn alt" onclick="switchTab('my')">借用 ${active}</button>
+        <button class="btn alt" onclick="openScan()">扫码</button>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat ok"><div class="num">${active}</div><div class="txt">进行中</div></div>
+      <div class="stat info"><div class="num">${history}</div><div class="txt">已归还</div></div>
+      <div class="stat gold"><div class="num">${u.credit}</div><div class="txt">信用分</div></div>
+    </div>
+
+    ${u.isAdmin ? `
+      <div class="role-banner">
+        <div><strong>管理员模式</strong><br>可管理物资、借还核验、处理报修</div>
+        <button class="mini-btn" onclick="showPage('admin')">进入管理台</button>
+      </div>` : `
+      <div class="role-banner" style="background:var(--primary-soft);color:#078f4a">
+        <div><strong>想帮忙管工具间？</strong><br>邻居都可申请成为志愿者管理员</div>
+        <button class="mini-btn" onclick="applyAdmin()">申请当管理员</button>
+      </div>`}
+
+    <div class="list">
+      <div class="row-card" onclick="showPage('credit')">
+        <div class="icon" style="background:var(--gold-soft)">⭐</div>
+        <div class="main"><h4>信用分明细</h4><p>当前 ${u.credit} · ${level.label}</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>
+      <div class="row-card" onclick="switchTab('msg')">
+        <div class="icon" style="background:var(--info-soft)">🔔</div>
+        <div class="main"><h4>消息通知</h4><p>到期提醒与预约通知</p></div>
+        <div class="side"><span class="tag ${unreadCount()?'bad':'gray'}">${unreadCount()||'无'} 条未读</span></div>
+      </div>
+      <div class="row-card" onclick="openScan()">
+        <div class="icon" style="background:var(--primary-soft)">📷</div>
+        <div class="main"><h4>扫码借还</h4><p>扫描物资二维码，快速登记</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>
+      <div class="row-card" onclick="openDamageCreate()">
+        <div class="icon" style="background:var(--danger-soft)">🛠️</div>
+        <div class="main"><h4>反馈损坏</h4><p>发现物资问题，随手登记</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>
+      <div class="row-card" onclick="showPage('feedback')">
+        <div class="icon" style="background:var(--purple-soft)">💬</div>
+        <div class="main"><h4>意见反馈</h4><p>报告 Bug、提功能建议</p></div>
+        <div class="side"><span class="tag ${state.feedbacks.some(f=>f.status!=='done')?'gold':'gray'}">›</span></div>
+      </div>
+      ${u.isAdmin?`
+      <div class="row-card" onclick="showPage('admin-rules')">
+        <div class="icon" style="background:var(--purple-soft)">⚙️</div>
+        <div class="main"><h4>借用规则</h4><p>默认天数 / 是否限借 / 预约开关</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>`:''}
+      <div class="row-card" onclick="confirmReset()">
+        <div class="icon" style="background:#f3f4f6">🧽</div>
+        <div class="main"><h4>重置演示数据</h4><p>恢复到初始示例物资与记录</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>
+      <div class="row-card" onclick="logout()">
+        <div class="icon" style="background:#f3f4f6">🚪</div>
+        <div class="main"><h4>退出登录</h4><p>返回登录页</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>
+    </div>
+  `;
+}
+function applyAdmin(){
+  state.user.isAdmin = true;
+  state.user.adminLabel = '邻里志愿者';
+  saveState();
+  renderMe();
+  toast('已开通管理员权限（演示）');
+}
+function logout(){
+  showPage('login');
+  ui.stack=[];
+}
+function confirmReset(){
+  openOverlay(`
+    <div class="dialog">
+      <h3>重置演示数据？</h3>
+      <p>将恢复初始示例物资、借还记录、消息与信用分。此操作仅影响本机。</p>
+      <div class="row2" style="display:flex;gap:10px">
+        <button class="btn-primary gray" onclick="closeOverlay()">取消</button>
+        <button class="btn-primary danger" onclick="closeOverlay();resetDemo()">确认重置</button>
+      </div>
+    </div>`, true);
+}
+function renderCredit(){
+  const u = state.user;
+  const level = creditLevel(u.credit);
+  const pct = Math.max(6, Math.min(100, u.credit));
+  document.getElementById('credit-content').innerHTML = `
+    <div class="hero" style="background:linear-gradient(135deg,#f7b500,#ffd666)">
+      <div class="row">
+        <div>
+          <div class="label">我的信用分</div>
+          <div class="score" style="color:#5c4300">${u.credit}</div>
+          <div class="hint" style="color:#6b5000">${level.label} · 更新于 ${u.creditUpdatedAt}</div>
+        </div>
+        <div class="pill" style="color:#5c4300;border-color:rgba(92,67,0,.2);background:rgba(255,255,255,.35)">${pct}%</div>
+      </div>
+      <div style="margin-top:14px;background:rgba(255,255,255,.35);border-radius:999px;height:10px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:#5c4300"></div>
+      </div>
+    </div>
+    <div class="card pad" style="margin:0 16px 12px">
+      <h3 style="margin:0 0 10px;font-size:16px">信用规则</h3>
+      <div class="rule-item"><div class="sign plus">+</div><div>按时归还完好物资 <b>+2</b></div></div>
+      <div class="rule-item"><div class="sign minus">−</div><div>逾期每天 <b>-5</b>（单次上限 -30）</div></div>
+      <div class="rule-item"><div class="sign minus">−</div><div>损坏/缺件 <b>-10</b>，并登记报修</div></div>
+      <div class="rule-item"><div class="sign plus">+</div><div>信用分 ≥95 可优先预约热门物资</div></div>
+    </div>
+    <div class="section-title"><h2>变更记录</h2></div>
+    <div class="list">
+      ${state.creditLog.map(c=>`
+        <div class="row-card">
+          <div class="icon" style="background:${c.delta>=0?'var(--primary-soft)':'var(--danger-soft)'}">${c.delta>=0?'↑':'↓'}</div>
+          <div class="main"><h4>${c.title}</h4><p>${c.time}</p></div>
+          <div class="side"><span class="tag ${c.delta>=0?'ok':'bad'}">${c.delta>0?'+':''}${c.delta}</span></div>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+/* =========================
+   Scan
+   ========================= */
+function openScan(){
+  openOverlay(`
+    <div class="sheet">
+      <h3>扫码借还</h3>
+      <div class="scan-wrap">
+        <div class="scan-frame"><div class="scan-line"></div></div>
+      </div>
+      <p style="text-align:center;color:var(--sub);font-size:13px;margin:0 0 16px">
+        将二维码放入框内<br>原型支持模拟扫描附近物资
+      </p>
+      <div class="scan-actions">
+        <button class="btn-primary" onclick="simulateScan('borrow')">模拟扫码 · 借用</button>
+        <button class="btn-primary ghost" onclick="simulateScan('return')">模拟扫码 · 归还</button>
+        <button class="btn-primary gray" onclick="closeOverlay()">关闭</button>
+      </div>
+    </div>`);
+}
+function simulateScan(mode){
+  closeOverlay();
+  if(mode === 'borrow'){
+    const target = state.items.find(i=>i.status==='available');
+    if(!target){ toast('附近没有可借物资'); return; }
+    openDetail(target.id);
+    toast('已识别：'+target.name);
+    setTimeout(()=>openBorrow(target.id), 350);
+  }else{
+    const rec = state.records.find(r=>r.userId===state.user.id && ['borrowed','overdue','pending'].includes(r.status))
+      || state.records.find(r=>['borrowed','overdue'].includes(r.status));
+    if(!rec){ toast('没有待归还的借用单'); return; }
+    if(rec.userId !== state.user.id){
+      toast('演示：为你打开管理员核销该笔');
+      openAdminReturn(rec.id);
+      return;
+    }
+    openReturn(rec.id);
+    toast('已识别：'+rec.itemName);
+  }
+}
+
+/* =========================
+   Admin
+   ========================= */
+function renderAdmin(){
+  const borrowed = state.records.filter(r=>r.status==='borrowed').length;
+  const overdue = state.records.filter(r=>r.status==='overdue').length;
+  const damages = state.damages.filter(d=>d.status!=='已处理').length;
+  const total = state.items.filter(i=>i.status!=='offline').length;
+  const reserves = state.reserves.filter(r=>r.status==='waiting' || r.status==='ready').length;
+
+  document.getElementById('admin-content').innerHTML = `
+    <div class="hero" style="background:linear-gradient(135deg,#5b46c7,#7b61ff 55%,#9b8cff)">
+      <div class="row">
+        <div>
+          <div class="label">管理台</div>
+          <div class="score" style="font-size:28px">工具间值班</div>
+          <div class="hint">借用自动通过 · 归还可人工核验</div>
+        </div>
+        <div class="pill">${state.user.name}</div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn" onclick="showPage('admin-desk')">借还台</button>
+        <button class="btn alt" onclick="showPage('admin-items')">物资</button>
+        <button class="btn alt" onclick="showPage('admin-damage')">报修</button>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat ok"><div class="num">${total}</div><div class="txt">在库/在册</div></div>
+      <div class="stat info"><div class="num">${borrowed}</div><div class="txt">借出中</div></div>
+      <div class="stat danger"><div class="num">${overdue}</div><div class="txt">逾期</div></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat gold"><div class="num">${reserves}</div><div class="txt">预约排队</div></div>
+      <div class="stat warn"><div class="num">${damages}</div><div class="txt">待处理报修</div></div>
+      <div class="stat"><div class="num">${state.records.filter(r=>r.status==='returned').length}</div><div class="txt">已归还</div></div>
+    </div>
+    <div class="section-title"><h2>快捷操作</h2></div>
+    <div class="list">
+      <div class="row-card" onclick="showPage('admin-items')">
+        <div class="icon" style="background:var(--primary-soft)">🗂️</div>
+        <div class="main"><h4>物资管理</h4><p>新增、编辑、上下架、维护状态</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>
+      <div class="row-card" onclick="showPage('admin-desk')">
+        <div class="icon" style="background:var(--info-soft)">📋</div>
+        <div class="main"><h4>借还台</h4><p>查看借出、核验归还、处理逾期</p></div>
+        <div class="side"><span class="tag ${overdue?'bad':'gray'}">${overdue? overdue+' 逾期':'正常'}</span></div>
+      </div>
+      <div class="row-card" onclick="showPage('admin-damage')">
+        <div class="icon" style="background:var(--danger-soft)">🛠️</div>
+        <div class="main"><h4>损坏报修</h4><p>登记与跟踪维修进度</p></div>
+        <div class="side"><span class="tag ${damages?'bad':'gray'}">${damages}</span></div>
+      </div>
+      <div class="row-card" onclick="showPage('admin-feedback')">
+        <div class="icon" style="background:var(--purple-soft)">💬</div>
+        <div class="main"><h4>意见反馈</h4><p>处理邻居的 Bug 与建议</p></div>
+        <div class="side"><span class="tag ${(state.feedbacks||[]).filter(f=>f.status==='open').length?'gold':'gray'}">${(state.feedbacks||[]).filter(f=>f.status==='open').length||'无待办'}</span></div>
+      </div>
+      <div class="row-card" onclick="showPage('admin-rules')">
+        <div class="icon" style="background:var(--purple-soft)">⚙️</div>
+        <div class="main"><h4>借用规则</h4><p>默认时长 / 上限 / 预约与信用</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>
+      <div class="row-card" onclick="openScan()">
+        <div class="icon" style="background:var(--gold-soft)">📷</div>
+        <div class="main"><h4>扫码核销</h4><p>快速处理现场归还</p></div>
+        <div class="side"><span class="tag gray">›</span></div>
+      </div>
+    </div>
+    <div class="section-title"><h2>管理员</h2><span class="link" onclick="toast('演示：可在设置中邀请邻居')">+ 邀请</span></div>
+    <div class="list">
+      ${[
+        {name:'林小雨', label:'值班管理员', on:true},
+        {name:'张叔', label:'物资协管', on:true},
+        {name:'王阿姨', label:'邻里志愿者', on:false}
+      ].map((p,idx)=>`
+        <div class="row-card">
+          <div class="icon" style="background:var(--purple-soft)">${idx===0?'👩':idx===1?'👨':'👩‍🦳'}</div>
+          <div class="main"><h4>${p.name}</h4><p>${p.label}</p></div>
+          <div class="side"><span class="tag ${p.on?'ok':'gray'}">${p.on?'在岗':'休息'}</span></div>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+function renderAdminItems(){
+  const chips = [
+    {id:'all', name:'全部'},
+    {id:'available', name:'可借'},
+    {id:'borrowed', name:'借出'},
+    {id:'maintenance', name:'维修'},
+    {id:'offline', name:'下架'}
+  ];
+  document.getElementById('admin-filter-chips').innerHTML = chips.map(c=>
+    `<button class="chip ${ui.adminFilter===c.id?'active':''}" onclick="setAdminFilter('${c.id}')">${c.name}</button>`
+  ).join('');
+
+  let items = state.items.slice();
+  if(ui.adminFilter !== 'all') items = items.filter(i=>i.status===ui.adminFilter);
+
+  const list = document.getElementById('admin-items-list');
+  if(!items.length){
+    list.innerHTML = emptyBox('🗂️','没有符合条件的物资','', '');
+    return;
+  }
+  list.innerHTML = items.map(i=>{
+    const holder = currentHolder(i.id);
+    return `
+    <div class="admin-item">
+      <div class="thumb" style="background:${gradStyle(i.grad)};overflow:hidden">${itemThumbInner(i, 26)}</div>
+      <div class="info">
+        <h4>${i.name}</h4>
+        <p>${i.loc} · 借出 ${i.borrowCount} 次 · ${i.condition}</p>
+        ${holder ? `<p style="color:var(--primary);font-weight:600;margin-top:2px">${holderLine(holder)}</p>` : ''}
+        <div style="margin-top:6px">${statusTag(i.status)}</div>
+      </div>
+      <div class="ops">
+        <button class="mini-btn" onclick="openItemEditor('${i.id}')">编辑</button>
+        <button class="mini-btn ghost" onclick="toggleOffline('${i.id}')">${i.status==='offline'?'上架':'下架'}</button>
+        ${holder && ['borrowed','overdue','pending'].includes(holder.status)
+          ? `<button class="mini-btn warn" onclick="openAdminReturn('${holder.id}')">核销</button>`
+          : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function setAdminFilter(f){ ui.adminFilter=f; renderAdminItems(); }
+function toggleOffline(id){
+  const i = itemById(id);
+  if(!i) return;
+  i.status = i.status === 'offline' ? 'available' : 'offline';
+  saveState(); renderAdminItems(); renderAdmin();
+  toast(i.status==='offline'?'已下架':'已上架');
+}
+
+function openItemEditor(id){
+  ui.editItem = id ? {...itemById(id), images: (itemById(id).images||[]).slice()} : {
+    id:'', name:'', emoji:'🧰', cat:'hand', grad:'blue', desc:'', loc:'',
+    status:'available', condition:'良好', tags:[], rating:5, borrowCount:0,
+    gallery:['整体'], images:[]
+  };
+  document.getElementById('admin-edit-title').textContent = id ? '编辑物资' : '新增物资';
+  renderItemEditor();
+  showPage('admin-edit');
+}
+function renderItemEditor(){
+  const i = ui.editItem;
+  const imgs = i.images || [];
+  document.getElementById('admin-edit-content').innerHTML = `
+    <div class="form">
+      <div class="field">
+        <label>名称</label>
+        <input value="${i.name}" oninput="ui.editItem.name=this.value" placeholder="例如：人字梯（3米）" />
+      </div>
+      <div class="field">
+        <label>物资图片（可多张，最多 6 张）</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
+          ${imgs.map((src,idx)=>`
+            <div style="position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:#f2f2f2">
+              <img src="${src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
+              <button onclick="removeItemImage(${idx})" style="position:absolute;right:4px;top:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px;line-height:22px">×</button>
+              ${idx===0?`<div style="position:absolute;left:4px;bottom:4px;font-size:10px;padding:2px 6px;border-radius:999px;background:rgba(7,193,96,.92);color:#fff">封面</div>`:''}
+            </div>`).join('')}
+          ${imgs.length<6?`
+            <label style="aspect-ratio:1;border-radius:12px;border:1.5px dashed #cfcfcf;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#888;cursor:pointer;font-size:12px">
+              <div style="font-size:22px">＋</div>
+              <div>上传图片</div>
+              <input type="file" accept="image/*" multiple style="display:none" onchange="onPickItemImages(this)" />
+            </label>`:''}
+        </div>
+        <div style="font-size:11px;color:var(--sub)">支持相册/拍照；上传后自动压缩。未上传时使用下方图标。</div>
+      </div>
+      <div class="field">
+        <label>图标（无图片时展示）</label>
+        <div class="opt-row">
+          ${['🪜','🛒','🛠️','🔨','✂️','🧹','🪑','🚲','🧰','🔋','📦','🍂'].map(e=>
+            `<button class="opt ${i.emoji===e?'active':''}" onclick="ui.editItem.emoji='${e}';renderItemEditor()">${e}</button>`
+          ).join('')}
+        </div>
+      </div>
+      <div class="field">
+        <label>分类</label>
+        <div class="opt-row">
+          ${(state.categories||[]).map(c=>
+            `<button class="opt ${i.cat===c.id?'active':''}" onclick="ui.editItem.cat='${c.id}';renderItemEditor()">${c.name}</button>`
+          ).join('')}
+          <button class="opt" style="border:1px dashed var(--primary);color:var(--primary);font-weight:700" onclick="openAddCategory()">＋ 新分类</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>卡片配色</label>
+        <div class="opt-row">
+          ${Object.keys(GRADIENTS).map(g=>
+            `<button class="opt ${i.grad===g?'active':''}" style="width:36px;height:36px;padding:0;background:${GRADIENTS[g]}" onclick="ui.editItem.grad='${g}';renderItemEditor()"></button>`
+          ).join('')}
+        </div>
+      </div>
+      <div class="field">
+        <label>存放位置</label>
+        <input value="${i.loc}" oninput="ui.editItem.loc=this.value" placeholder="例如：工具间 A-01" />
+      </div>
+      <div class="field">
+        <label>简介</label>
+        <textarea oninput="ui.editItem.desc=this.value" placeholder="用途、注意事项…">${i.desc}</textarea>
+      </div>
+      <div class="field">
+        <label>物品状态</label>
+        <div class="opt-row">
+          ${['良好','轻微磨损','待补货','维修中'].map(c=>
+            `<button class="opt ${i.condition===c?'active':''}" onclick="ui.editItem.condition='${c}';renderItemEditor()">${c}</button>`
+          ).join('')}
+        </div>
+      </div>
+      <div class="field">
+        <label>可借状态</label>
+        <div class="opt-row">
+          ${[['available','可借'],['borrowed','借出'],['maintenance','维修'],['offline','下架']].map(([v,t])=>
+            `<button class="opt ${i.status===v?'active':''}" onclick="ui.editItem.status='${v}';renderItemEditor()">${t}</button>`
+          ).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function onPickItemImages(input){
+  const files = Array.from(input.files || []).slice(0, 6 - ((ui.editItem.images||[]).length));
+  if(!files.length) return;
+  Promise.all(files.map(readImageCompressed)).then(urls=>{
+    ui.editItem.images = (ui.editItem.images||[]).concat(urls).slice(0,6);
+    renderItemEditor();
+    toast('图片已添加');
+  }).catch(()=>toast('图片读取失败'));
+  input.value = '';
+}
+function removeItemImage(idx){
+  ui.editItem.images = (ui.editItem.images||[]).filter((_,n)=>n!==idx);
+  renderItemEditor();
+}
+function readImageCompressed(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const max = 480;
+        let w = img.width, h = img.height;
+        if(!w || !h){ resolve(reader.result); return; }
+        if(w >= h && w > max){ h = Math.round(h * max / w); w = max; }
+        else if(h > max){ w = Math.round(w * max / h); h = max; }
+        try{
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
+        }catch(e){
+          resolve(reader.result);
+        }
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function openAddCategory(){
+  openOverlay(`
+    <div class="dialog">
+      <h3>新增分类</h3>
+      <p>可自定义分类名称，首页筛选会立即出现。</p>
+      <div class="field" style="box-shadow:none;padding:0;margin-bottom:14px">
+        <label>分类名称</label>
+        <input id="new-cat-name" placeholder="例如：家电维修" maxlength="12" />
+      </div>
+      <div style="display:grid;gap:10px">
+        <button class="btn-primary" onclick="submitAddCategory()">添加</button>
+        <button class="btn-primary gray" onclick="closeOverlay()">取消</button>
+      </div>
+    </div>`, true);
+}
+function submitAddCategory(){
+  const input = document.getElementById('new-cat-name');
+  const name = (input && input.value || '').trim();
+  if(!name){ toast('请填写分类名称'); return; }
+  if((state.categories||[]).some(c=>c.name===name)){ toast('分类已存在'); return; }
+  const id = 'c' + Date.now();
+  state.categories.push({id, name});
+  if(ui.editItem) ui.editItem.cat = id;
+  saveState();
+  closeOverlay();
+  renderItemEditor();
+  renderHome();
+  toast('分类已添加');
+}
+function saveItem(){
+  const i = ui.editItem;
+  if(!i.name.trim()){ toast('请填写名称'); return; }
+  if(!i.loc.trim()) i.loc = '工具间';
+  if(!i.desc.trim()) i.desc = '暂无简介';
+  if(!i.images) i.images = [];
+  if(i.id){
+    const idx = state.items.findIndex(x=>x.id===i.id);
+    if(idx>=0) state.items[idx] = {...state.items[idx], ...i};
+    toast('已保存');
+  }else{
+    i.id = 'i'+Date.now();
+    if(!i.gallery || !i.gallery.length) i.gallery = ['整体'];
+    state.items.unshift({...i});
+    toast('新增成功');
+  }
+  saveState();
+  renderAll();
+  showPage('admin-items');
+  ui.stack = ['admin'];
+}
+
+function renderDesk(){
+  document.querySelectorAll('#desk-seg button').forEach((b,idx)=>{
+    b.classList.toggle('active', ['borrowed','overdue','returned'][idx]===ui.deskTab);
+  });
+  let recs = state.records.slice();
+  if(ui.deskTab === 'borrowed') recs = recs.filter(r=>r.status==='borrowed');
+  else if(ui.deskTab === 'overdue') recs = recs.filter(r=>r.status==='overdue');
+  else recs = recs.filter(r=>r.status==='returned');
+
+  const list = document.getElementById('desk-list');
+  if(!recs.length){
+    list.innerHTML = emptyBox('📋','没有记录','', '');
+    return;
+  }
+  list.innerHTML = recs.map(r=>`
+    <div class="row-card">
+      <div class="icon" style="background:${gradStyle(r.grad)}">${r.itemEmoji}</div>
+      <div class="main">
+        <h4>${r.itemName}</h4>
+        <p>${r.userName} · ${r.userAddr || personAddr(r.userId, r) || '未填写住址'}</p>
+        <p>${r.borrowAt} · 应还 ${r.dueAt}</p>
+        <p>备注：${r.note}</p>
+      </div>
+      <div class="side">
+        ${statusTag(r.status)}
+        ${['borrowed','overdue'].includes(r.status)?`
+          <button class="mini-btn" onclick="openAdminReturn('${r.id}')">核验归还</button>
+        `:''}
+        ${r.status==='overdue'?`
+          <button class="mini-btn warn" onclick="remindUser('${r.id}')">提醒</button>
+        `:''}
+        ${r.status==='returned'?`<button class="mini-btn ghost" onclick="openDetail('${r.itemId}')">物资</button>`:''}
+      </div>
+    </div>`).join('');
+}
+function setDeskTab(tab){ ui.deskTab=tab; renderDesk(); }
+function openAdminReturn(id){
+  const r = state.records.find(x=>x.id===id);
+  if(!r) return;
+  openOverlay(`
+    <div class="dialog">
+      <h3>核验归还</h3>
+      <p>${r.userName}（${r.userAddr || personAddr(r.userId, r) || '未填写住址'}）归还「${r.itemName}」。请确认物品完好后入库。</p>
+      <div style="display:grid;gap:10px">
+        <button class="btn-primary" onclick="adminReturn('${id}', true)">完好入库</button>
+        <button class="btn-primary danger" onclick="adminReturn('${id}', false)">损坏登记</button>
+        <button class="btn-primary gray" onclick="closeOverlay()">取消</button>
+      </div>
+    </div>`, true);
+}
+function adminReturn(id, ok){
+  const r = state.records.find(x=>x.id===id);
+  if(!r){ closeOverlay(); return; }
+  r.status = 'returned';
+  r.returnAt = '刚刚';
+  const item = itemById(r.itemId);
+  if(item){
+    item.status = ok ? 'available' : 'maintenance';
+    if(!ok){
+      state.damages.unshift({
+        id:'d'+Date.now(), itemId:item.id, itemName:item.name, itemEmoji:item.emoji,
+        reporter:'管理员核验', desc:'归还核验发现损坏/缺件', status:'待处理', time:'刚刚'
+      });
+    }
+  }
+  if(ok && r.userId===state.user.id){
+    state.user.credit = Math.min(120, state.user.credit + 2);
+    state.creditLog.unshift({id:'c'+Date.now(), title:`按时归还：${r.itemName}`, delta:2, time:'刚刚'});
+  }
+  // notify next reservation
+  const next = state.reserves
+    .filter(x=>x.itemId===r.itemId && x.status==='waiting')
+    .sort((a,b)=>(a.queue||0)-(b.queue||0))[0];
+  if(next){
+    markReserveReady(next);
+  }
+  closeOverlay();
+  saveState(); renderAll();
+  toast(ok?'已核验入库':'已登记损坏');
+}
+function remindUser(id){
+  const r = state.records.find(x=>x.id===id);
+  if(!r) return;
+  state.messages.unshift({
+    id:'m'+Date.now(), type:'due', title:'逾期提醒',
+    body:`请尽快归还「${r.itemName}」（应还 ${r.dueAt}）。逾期会影响信用分。`,
+    time:'刚刚', read:false
+  });
+  saveState(); renderMsg();
+  toast('已发送提醒');
+}
+
+function renderDamage(){
+  const list = document.getElementById('damage-list');
+  if(!state.damages.length){
+    list.innerHTML = emptyBox('🛠️','暂无报修','', '');
+    return;
+  }
+  list.innerHTML = state.damages.map(d=>`
+    <div class="row-card">
+      <div class="icon" style="background:var(--danger-soft)">${d.itemEmoji}</div>
+      <div class="main">
+        <h4>${d.itemName}</h4>
+        <p>${d.desc}</p>
+        <p>${d.reporter} · ${d.time}</p>
+      </div>
+      <div class="side">
+        <span class="tag ${d.status==='已处理'?'ok':d.status==='维修中'?'info':'bad'}">${d.status}</span>
+        ${d.status!=='已处理'?`
+          <button class="mini-btn" onclick="updateDamage('${d.id}','维修中')">维修中</button>
+          <button class="mini-btn ghost" onclick="updateDamage('${d.id}','已处理')">完成</button>
+        `:`<button class="mini-btn ghost" onclick="updateDamage('${d.id}','待处理')">重开</button>`}
+      </div>
+    </div>`).join('');
+}
+function updateDamage(id, status){
+  const d = state.damages.find(x=>x.id===id);
+  if(d){
+    d.status = status;
+    if(status==='已处理'){
+      const item = itemById(d.itemId);
+      if(item && item.status==='maintenance') item.status='available';
+    }
+    saveState(); renderAll();
+    toast('已更新');
+  }
+}
+function openDamageCreate(){
+  const availableItems = state.items;
+  openOverlay(`
+    <div class="sheet">
+      <h3>登记损坏 / 报修</h3>
+      <div class="form" style="padding:0">
+        <div class="field">
+          <label>选择物资</label>
+          <div class="opt-row">
+            ${availableItems.slice(0,8).map(i=>
+              `<button class="opt ${ui.editItem && ui.editItem.id===i.id?'active':''}" onclick="pickDamageItem('${i.id}')">${i.emoji} ${i.name.slice(0,6)}</button>`
+            ).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>问题描述</label>
+          <textarea id="damage-desc" placeholder="例如：无法启动 / 缺少零件 / 需要补货"></textarea>
+        </div>
+        <button class="btn-primary" onclick="submitDamage()">提交报修</button>
+        <button class="btn-primary gray" onclick="closeOverlay()">取消</button>
+      </div>
+    </div>`);
+}
+function pickDamageItem(id){
+  ui.editItem = itemById(id);
+  openDamageCreate();
+}
+function submitDamage(){
+  const item = ui.editItem || state.items[0];
+  const descEl = document.getElementById('damage-desc');
+  const desc = descEl ? descEl.value.trim() : '';
+  if(!desc){ toast('请描述问题'); return; }
+  state.damages.unshift({
+    id:'d'+Date.now(), itemId:item.id, itemName:item.name, itemEmoji:item.emoji,
+    reporter:state.user.name, desc, status:'待处理', time:'刚刚'
+  });
+  saveState(); closeOverlay(); renderAll();
+  toast('已提交报修');
+}
+
+/* =========================
+   Feedback
+   ========================= */
+function feedbackTypeMeta(type){
+  return {
+    bug:{label:'问题反馈', icon:'🐞', bg:'var(--danger-soft)'},
+    feature:{label:'功能建议', icon:'💡', bg:'var(--gold-soft)'},
+    other:{label:'其他', icon:'💬', bg:'var(--info-soft)'}
+  }[type] || {label:'其他', icon:'💬', bg:'var(--info-soft)'};
+}
+function feedbackStatusTag(status){
+  const map = {open:['gold','待处理'], doing:['info','处理中'], done:['ok','已处理']};
+  const [cls, text] = map[status] || ['gray', status];
+  return `<span class="tag ${cls}">${text}</span>`;
+}
+function renderFeedback(){
+  const list = (state.feedbacks || []).filter(f => f.userId === state.user.id);
+  const openN = state.feedbacks.filter(f=>f.status==='open').length;
+  document.getElementById('feedback-content').innerHTML = `
+    <div class="hero" style="background:linear-gradient(135deg,#7b61ff,#9b8cff)">
+      <div class="row">
+        <div>
+          <div class="label">共建更好用的工具间</div>
+          <div class="score" style="font-size:26px">意见反馈</div>
+          <div class="hint">Bug、功能建议都欢迎 · 管理员会跟进</div>
+        </div>
+        <div class="pill">待处理 ${openN}</div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn" onclick="openFeedbackForm('bug')">报 Bug</button>
+        <button class="btn alt" onclick="openFeedbackForm('feature')">提建议</button>
+      </div>
+    </div>
+    <div class="section-title"><h2>我的反馈</h2><span class="link" onclick="openFeedbackForm()">+ 写一条</span></div>
+    <div class="list">
+      ${list.length ? list.map(f=>{
+        const meta = feedbackTypeMeta(f.type);
+        return `
+        <div class="row-card" onclick="openFeedbackDetail('${f.id}')">
+          <div class="icon" style="background:${meta.bg}">${meta.icon}</div>
+          <div class="main">
+            <h4>${f.title}</h4>
+            <p>${meta.label} · ${f.time}</p>
+            <p style="margin-top:4px;color:#666">${f.content.slice(0,42)}${f.content.length>42?'…':''}</p>
+          </div>
+          <div class="side">${feedbackStatusTag(f.status)}</div>
+        </div>`;
+      }).join('') : emptyBox('💬','还没有反馈记录','遇到问题或有好点子，随时告诉我们','openFeedbackForm()')}
+    </div>
+  `;
+}
+function openFeedbackForm(type){
+  ui.feedbackType = type || ui.feedbackType || 'bug';
+  ui.feedbackTitle = '';
+  ui.feedbackContent = '';
+  renderFeedbackForm();
+  showPage('feedback');
+}
+function renderFeedbackForm(){
+  const types = [
+    {id:'bug', name:'🐞 问题反馈'},
+    {id:'feature', name:'💡 功能建议'},
+    {id:'other', name:'💬 其他'}
+  ];
+  openOverlay(`
+    <div class="sheet">
+      <h3>写反馈</h3>
+      <div class="form" style="padding:0">
+        <div class="field">
+          <label>类型</label>
+          <div class="opt-row">
+            ${types.map(t=>`<button class="opt ${ui.feedbackType===t.id?'active':''}" onclick="ui.feedbackType='${t.id}';renderFeedbackForm()">${t.name}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>标题</label>
+          <input id="fb-title" value="${ui.feedbackTitle}" oninput="ui.feedbackTitle=this.value" placeholder="一句话概括" />
+        </div>
+        <div class="field">
+          <label>详细描述</label>
+          <textarea id="fb-content" oninput="ui.feedbackContent=this.value" placeholder="发生了什么？你希望变成怎样？">${ui.feedbackContent}</textarea>
+        </div>
+        <div class="note-card" style="background:var(--info-soft);color:#0b6a94">
+          可匿名提建议，但留下楼栋方便管理员回访。提交后可在列表查看进度。
+        </div>
+        <button class="btn-primary" onclick="submitFeedback()">提交反馈</button>
+        <button class="btn-primary gray" onclick="closeOverlay()">取消</button>
+      </div>
+    </div>`);
+}
+function submitFeedback(){
+  const title = (document.getElementById('fb-title')?.value || ui.feedbackTitle || '').trim();
+  const content = (document.getElementById('fb-content')?.value || ui.feedbackContent || '').trim();
+  if(!title){ toast('请填写标题'); return; }
+  if(!content){ toast('请填写描述'); return; }
+  state.feedbacks = state.feedbacks || [];
+  state.feedbacks.unshift({
+    id:'f'+Date.now(),
+    userId:state.user.id,
+    userName:state.user.name,
+    userAddr:formatAddr(state.user),
+    type:ui.feedbackType,
+    title,
+    content,
+    status:'open',
+    time:'刚刚',
+    reply:''
+  });
+  state.messages.unshift({
+    id:'m'+Date.now(),
+    type:'system',
+    title:'反馈已提交',
+    body:`「${title}」已收到，管理员会尽快查看。`,
+    time:'刚刚',
+    read:false
+  });
+  saveState();
+  closeOverlay();
+  renderAll();
+  renderFeedback();
+  showPage('feedback');
+  toast('反馈已提交');
+}
+function openFeedbackDetail(id){
+  const f = (state.feedbacks||[]).find(x=>x.id===id);
+  if(!f) return;
+  const meta = feedbackTypeMeta(f.type);
+  openOverlay(`
+    <div class="sheet">
+      <h3>反馈详情</h3>
+      <div class="row-card" style="box-shadow:none;background:var(--bg)">
+        <div class="icon" style="background:${meta.bg}">${meta.icon}</div>
+        <div class="main">
+          <h4>${f.title}</h4>
+          <p>${meta.label} · ${f.time} · ${f.userName}</p>
+        </div>
+        <div class="side">${feedbackStatusTag(f.status)}</div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>描述</label>
+        <div style="font-size:14px;line-height:1.7;color:#444">${f.content}</div>
+      </div>
+      ${f.reply ? `
+      <div class="field" style="margin-top:12px">
+        <label>管理员回复</label>
+        <div style="font-size:14px;line-height:1.7;color:#078f4a">${f.reply}</div>
+      </div>` : `
+      <div class="note-card" style="margin-top:12px">管理员处理后会在这里回复。</div>`}
+      <button class="btn-primary gray" style="margin-top:14px" onclick="closeOverlay()">关闭</button>
+    </div>`);
+}
+function setFeedbackTab(tab){
+  ui.feedbackTab = tab;
+  renderAdminFeedback();
+}
+function renderAdminFeedback(){
+  document.querySelectorAll('#fb-seg button').forEach((b,idx)=>{
+    b.classList.toggle('active', ['open','doing','done'][idx]===ui.feedbackTab);
+  });
+  const recs = (state.feedbacks||[]).filter(f=>f.status===ui.feedbackTab);
+  const list = document.getElementById('admin-feedback-list');
+  if(!recs.length){
+    list.innerHTML = emptyBox('💬','暂无反馈','', '');
+    return;
+  }
+  list.innerHTML = recs.map(f=>{
+    const meta = feedbackTypeMeta(f.type);
+    return `
+      <div class="row-card">
+        <div class="icon" style="background:${meta.bg}">${meta.icon}</div>
+        <div class="main">
+          <h4>${f.title}</h4>
+          <p>${f.userName} · ${f.userAddr || personAddr(f.userId, f) || '—'}</p>
+          <p style="margin-top:4px;color:#666">${f.content}</p>
+          ${f.reply ? `<p style="margin-top:4px;color:#078f4a">回复：${f.reply}</p>` : ''}
+          <p style="margin-top:4px">${meta.label} · ${f.time}</p>
+        </div>
+        <div class="side">
+          ${feedbackStatusTag(f.status)}
+          ${f.status!=='done' ? `
+            <button class="mini-btn" onclick="updateFeedbackStatus('${f.id}','doing')">处理中</button>
+            <button class="mini-btn ghost" onclick="replyFeedback('${f.id}')">回复</button>
+            <button class="mini-btn warn" onclick="updateFeedbackStatus('${f.id}','done')">完成</button>
+          ` : `
+            <button class="mini-btn ghost" onclick="updateFeedbackStatus('${f.id}','open')">重开</button>
+          `}
+        </div>
+      </div>`;
+  }).join('');
+}
+function updateFeedbackStatus(id, status){
+  const f = (state.feedbacks||[]).find(x=>x.id===id);
+  if(!f) return;
+  f.status = status;
+  if(status==='done' && !f.reply) f.reply = '已处理完毕。';
+  saveState();
+  renderAll();
+  toast('已更新状态');
+}
+function replyFeedback(id){
+  const f = (state.feedbacks||[]).find(x=>x.id===id);
+  if(!f) return;
+  openOverlay(`
+    <div class="dialog">
+      <h3>回复反馈</h3>
+      <p>${f.title}</p>
+      <div class="field" style="box-shadow:none;padding:0;margin-bottom:12px">
+        <label>回复内容</label>
+        <textarea id="fb-reply" placeholder="写给 ${f.userName} 的说明…">${f.reply||''}</textarea>
+      </div>
+      <div style="display:grid;gap:10px">
+        <button class="btn-primary" onclick="submitFeedbackReply('${id}')">保存回复</button>
+        <button class="btn-primary gray" onclick="closeOverlay()">取消</button>
+      </div>
+    </div>`, true);
+}
+function submitFeedbackReply(id){
+  const f = (state.feedbacks||[]).find(x=>x.id===id);
+  const text = (document.getElementById('fb-reply')?.value || '').trim();
+  if(!f) return;
+  if(!text){ toast('请填写回复'); return; }
+  f.reply = text;
+  if(f.status === 'open') f.status = 'doing';
+  state.messages.unshift({
+    id:'m'+Date.now(), type:'system', title:'反馈有回复',
+    body:`「${f.title}」：${text}`, time:'刚刚', read:false
+  });
+  saveState();
+  closeOverlay();
+  renderAll();
+  toast('已回复');
+}
+
+function renderRules(){
+  const s = state.settings;
+  document.getElementById('rules-content').innerHTML = `
+    <div class="form">
+      <div class="field">
+        <label>默认借用天数</label>
+        <div class="opt-row">
+          ${[1,3,7,14,30].map(d=>`<button class="opt ${s.defaultDays===d?'active':''}" onclick="setRule('defaultDays',${d})">${d} 天</button>`).join('')}
+        </div>
+      </div>
+      <div class="field">
+        <label>最长借用期限（0 表示不限制）</label>
+        <div class="opt-row">
+          ${[0,7,14,30].map(d=>`<button class="opt ${s.maxDays===d?'active':''}" onclick="setRule('maxDays',${d})">${d===0?'不限制':d+' 天'}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field">
+        <label>预约到货确认时限（超时自动取消）</label>
+        <div class="opt-row">
+          ${[6,12,24,48].map(h=>`<button class="opt ${s.reserveConfirmHours===h?'active':''}" onclick="setRule('reserveConfirmHours',${h})">${h} 小时</button>`).join('')}
+        </div>
+      </div>
+      <div class="switch-row">
+        <div>
+          <div style="font-weight:700">开放预约排队</div>
+          <div style="font-size:12px;color:var(--sub)">物资被借出时允许邻居排队</div>
+        </div>
+        <div class="switch ${s.allowReserve?'on':''}" onclick="toggleRule('allowReserve')"><i></i></div>
+      </div>
+      <div class="switch-row">
+        <div>
+          <div style="font-weight:700">启用信用分</div>
+          <div style="font-size:12px;color:var(--sub)">按时归还加分，逾期/损坏扣分</div>
+        </div>
+        <div class="switch ${s.creditEnabled?'on':''}" onclick="toggleRule('creditEnabled')"><i></i></div>
+      </div>
+      <div class="note-card">
+        预约到货后，居民须在确认时限内点「确认借用」；超时未确认将自动取消并顺延给下一位。
+      </div>
+    </div>
+  `;
+}
+function setRule(key,val){ state.settings[key]=val; renderRules(); }
+function toggleRule(key){ state.settings[key]=!state.settings[key]; renderRules(); }
+function saveRules(){
+  saveState(); renderAll();
+  toast('规则已保存');
+  goBack();
+}
+
+/* =========================
+   Render all
+   ========================= */
+function renderAll(){
+  processReserveTimeouts();
+  renderHome();
+  renderMy();
+  renderMsg();
+  renderMe();
+  renderAdmin();
+  renderAdminItems();
+  renderDesk();
+  renderDamage();
+  renderFeedback();
+  renderAdminFeedback();
+  renderRules();
+  if(ui.detailId) renderDetail();
+  const dot = document.getElementById('msg-dot');
+  const n = unreadCount();
+  if(n>0){ dot.classList.remove('hide'); dot.textContent = n>9?'9+':n; }
+  else dot.classList.add('hide');
+}
+
+/* init */
+renderAll();
+if(location.hash === '#admin'){
+  login('admin');
+}else{
+  showPage('login', false);
+}
+</script>
+</body>
+</html>
